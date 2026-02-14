@@ -42,7 +42,7 @@ router.post('/admin/login',
 router.post('/changePassword',
   
     validateRequest(AuthValidation.changePasswordValidationSchema),
-    auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin),
+    auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
     AuthControllers.changePassword
 )
 router.post(

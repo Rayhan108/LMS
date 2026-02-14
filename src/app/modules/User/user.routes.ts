@@ -34,7 +34,7 @@ router.patch(
       });
     }
   },
-  auth(USER_ROLE.user, USER_ROLE.superAdmin, USER_ROLE.admin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   validateRequest(editProfileSchema),
   UserControllers.updateProfile,
 );
@@ -43,13 +43,13 @@ router.patch(
 router.get(
   '/profile',
  
-  auth(USER_ROLE.superAdmin,USER_ROLE.admin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   UserControllers.getMyProfile,
 );
 router.get(
   '/my-profile',
  
-  auth(USER_ROLE.user,USER_ROLE.superAdmin,USER_ROLE.admin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   UserControllers.getMyProfile,
 );
 router.get(
@@ -61,20 +61,20 @@ router.get(
 router.get(
   '/all',
  
-  auth(USER_ROLE.admin,USER_ROLE.superAdmin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   UserControllers.getAllUser,
 );
 
-router.delete('/delete-profile',auth(USER_ROLE.superAdmin,USER_ROLE.admin,USER_ROLE.user),UserControllers.deleteProfile);
+router.delete('/delete-profile',auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),UserControllers.deleteProfile);
 
-router.delete('/delete-user/:id',auth(USER_ROLE.superAdmin,USER_ROLE.admin),UserControllers.deleteUser);
+router.delete('/delete-user/:id',auth(USER_ROLE.superAdmin),UserControllers.deleteUser);
 
 
 
 
 router.patch(
   '/block-user/:id',
-  auth(USER_ROLE.superAdmin, USER_ROLE.admin),
+  auth(USER_ROLE.superAdmin),
   UserControllers.toggleUserBlock
 );
 

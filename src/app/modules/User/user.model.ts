@@ -27,7 +27,7 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
         default: null,
       },
     },
- refercode: { type: String, unique: true, sparse: true },
+
     status: {
       type: String,
       required: true,
@@ -38,18 +38,17 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
  role: { 
   type: String, 
   required: true, 
-  enum: ["user", "admin", "superAdmin"], 
-  default: "user" 
+  enum: ["student", "teacher", "assistant","parent","superAdmin"], 
+ 
 },
 
     fcmToken: { type: String, required: true },
-    point: { type: Number, default:0},
-    loyalityTier: { type: String,   enum: ["Silver", "Gold", "Platinum"], default: "Silver"},
+ 
+
     isOtpVerified: { type: Boolean, default: false },
-    lastView:{ type: String },
+    
     passwordChangedAt: { type: Date },
-    lastBirthdayRewardYear: { type: Number, default: 0 },
-    canClaimBirthdayReward: { type: Boolean, default: false },
+ 
   },
   {
     timestamps: true,

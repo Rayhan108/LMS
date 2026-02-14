@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   '/create-faq',
 
-  auth(USER_ROLE.superAdmin,USER_ROLE.admin),
+  auth(USER_ROLE.superAdmin),
 //   validateRequest(EventCreateSchema),
   FaqControllers.createFAQ,
 );

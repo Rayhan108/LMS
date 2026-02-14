@@ -10,7 +10,7 @@ const privacyPolicyRouter = express.Router();
 // Route to create or update Privacy Policy content (only accessible to admin or super-admin)
 privacyPolicyRouter.post(
   '/create-or-update',
-  auth(USER_ROLE.superAdmin,USER_ROLE.admin),
+  auth(USER_ROLE.superAdmin),
   PrivacyPolicyController.createOrUpdatePrivacyPolicy
 );
 

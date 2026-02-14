@@ -8,20 +8,20 @@ const router = Router();
 
 router.get(
   '/my-notifications',
-  auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   NotificationController.getMyNotifications
 );
 
 
 router.patch(
   '/mark-as-read',
-  auth(USER_ROLE.user),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   NotificationController.markAsRead
 );
 
 router.patch(
   '/mark-as-read/:id',
-  auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+  auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   NotificationController.markSingleAsRead
 );
 export const NotificationRoutes = router;
