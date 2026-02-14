@@ -80,7 +80,7 @@ export const registerUserValidationSchema = z
 
 
     contact: contactSchema,
-
+role: z.enum(["superAdmin", "teacher","assistant","parent","student"]),
     location: locationSchema,
 
     dob: dobSchema,
