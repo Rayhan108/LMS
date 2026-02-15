@@ -6,6 +6,7 @@ import privacyPolicyRouter from '../modules/PrivacyPolicy/privacyPolicy.routes';
 import termsRouter from '../modules/Terms/terms.route';
 import { FaqRoutes } from '../modules/FAQ/faq.routes';
 import { ContactRoutes } from '../modules/ContactUs/contact.route';
+import { CourseRoutes } from '../modules/Course/course.routes';
 
 
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: '/contact',
     route:ContactRoutes
+  },
+  {
+    path: '/courses',
+    route:CourseRoutes
   }
 
 

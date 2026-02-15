@@ -80,7 +80,7 @@ const userLogin=catchAsync(async(req,res)=>{
   });
     sendResponse(res, {
         success: true,
-        message: 'User Logged in Successfully',
+        message: 'Logged in Successfully',
         statusCode: httpStatus.OK,
         data: result,
       });
