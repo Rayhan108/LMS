@@ -108,7 +108,7 @@ const getAllCoursesFromDB = async (user: JwtPayload, query: Record<string, unkno
 
   const result = await courseQuery.modelQuery;
   const meta = await courseQuery.countTotal();
-  return { result, meta };
+  return {meta, result };
 };
 
 export const CourseServices = {
