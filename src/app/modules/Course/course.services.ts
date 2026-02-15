@@ -7,13 +7,43 @@ import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
 
 const createCourseIntoDB = async (payload: ICourse) => {
+      const isExists = await CourseModel.findOne({
+    className: payload.className,
+    subjectName: payload.subjectName,
+  });
+
+  if (isExists) {
+    throw new AppError(httpStatus.CONFLICT, 'This subject is already exists in this class!');
+  }
   return await CourseModel.create(payload);
 };
 
 const updateCourseInfoInDB = async (id: string, payload: Partial<ICourse>) => {
-  return await CourseModel.findByIdAndUpdate(id, payload, { new: true });
-};
 
+  if (payload.className || payload.subjectName) {
+    const currentCourse = await CourseModel.findById(id);
+    if (!currentCourse) throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
+
+    const checkClassName = payload.className || currentCourse.className;
+    const checkSubjectName = payload.subjectName || currentCourse.subjectName;
+
+
+    const isExists = await CourseModel.findOne({
+      _id: { $ne: id }, 
+      className: checkClassName,
+      subjectName: checkSubjectName,
+    });
+
+    if (isExists) {
+      throw new AppError(httpStatus.CONFLICT, 'This subject is already exists in this class!');
+    }
+  }
+
+  return await CourseModel.findByIdAndUpdate(id, payload, { 
+    new: true, 
+    runValidators: true 
+  });
+};
 
 
 const assignTeacherInDB = async (id: string, teacherId: string) => {

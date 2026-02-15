@@ -3,8 +3,8 @@ import { ICourse } from './course.interface';
 
 const courseSchema = new Schema<ICourse>(
   {
-    className: { type: String, required: true },
-    subjectName: { type: String, required: true },
+    className: { type: String, required: true,trim:true },
+    subjectName: { type: String, required: true,trim:true },
     image: { type: String },
     status: { type: String, enum: ['Active', 'Pending', 'Complete'], default: 'Pending' },
     teacher: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -14,5 +14,5 @@ const courseSchema = new Schema<ICourse>(
   },
   { timestamps: true }
 );
-
+courseSchema.index({ className: 1, subjectName: 1 }, { unique: true });
 export const CourseModel = model<ICourse>('Course', courseSchema);
