@@ -9,6 +9,7 @@ import { ContactRoutes } from '../modules/ContactUs/contact.route';
 import { CourseRoutes } from '../modules/Course/course.routes';
 import { ClassRoutes } from '../modules/Class/class.routes';
 import { TaskRoutes } from '../modules/Task/task.routes';
+import { SubmissionRoutes } from '../modules/Submission/submission.routes';
 
 
 
@@ -57,7 +58,11 @@ const moduleRoutes = [
   {
     path: '/task',
     route:TaskRoutes
-  }
+  },
+  {
+    path: '/submit',
+    route:SubmissionRoutes
+  },
 
 
 ];
