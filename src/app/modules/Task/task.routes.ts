@@ -1,0 +1,30 @@
+import express, { NextFunction, Request, Response } from 'express';
+import auth from '../../middleware/auth';
+import { upload } from '../../middleware/multer';
+import validateRequest from '../../middleware/validateRequest';
+import { TaskValidations } from './task.validation';
+import { TaskControllers } from './task.controller';
+
+const router = express.Router();
+
+const parseBody = (req: Request, res: Response, next: NextFunction) => {
+  if (req.body.body) req.body = JSON.parse(req.body.body);
+  next();
+};
+
+router.post(
+  '/create',
+  auth('teacher', 'assistant'),
+  upload.single('document'),
+  parseBody,
+  validateRequest(TaskValidations.createTaskValidationSchema),
+  TaskControllers.createTask
+);
+
+router.get(
+  '/:courseId',
+  auth('teacher', 'assistant', 'student'),
+  TaskControllers.getTasksByCourse
+);
+
+export const TaskRoutes = router;

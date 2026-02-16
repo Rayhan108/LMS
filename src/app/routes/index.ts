@@ -8,6 +8,7 @@ import { FaqRoutes } from '../modules/FAQ/faq.routes';
 import { ContactRoutes } from '../modules/ContactUs/contact.route';
 import { CourseRoutes } from '../modules/Course/course.routes';
 import { ClassRoutes } from '../modules/Class/class.routes';
+import { TaskRoutes } from '../modules/Task/task.routes';
 
 
 
@@ -52,6 +53,10 @@ const moduleRoutes = [
   {
     path: '/class',
     route:ClassRoutes
+  },
+  {
+    path: '/task',
+    route:TaskRoutes
   }
 
 
