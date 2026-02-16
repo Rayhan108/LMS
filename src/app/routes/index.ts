@@ -7,6 +7,7 @@ import termsRouter from '../modules/Terms/terms.route';
 import { FaqRoutes } from '../modules/FAQ/faq.routes';
 import { ContactRoutes } from '../modules/ContactUs/contact.route';
 import { CourseRoutes } from '../modules/Course/course.routes';
+import { ClassRoutes } from '../modules/Class/class.routes';
 
 
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
   {
     path: '/courses',
     route:CourseRoutes
+  },
+  {
+    path: '/class',
+    route:ClassRoutes
   }
 
 
