@@ -12,10 +12,12 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
     lastName: { type: String, required: true },
     fullName: { type: String },
     image: { type: String },
+    gender: { type: String },
+    about: { type: String },
     email: { type: String, required: true, unique: true },
     contact: { type: String, required: true },
-    location: { type: String, required: true },
-    dob: { type: Date, required: true },
+ 
+    dob: { type: Date },
     password: { type: String, required: true, select: false },
     verification: {
       code: {

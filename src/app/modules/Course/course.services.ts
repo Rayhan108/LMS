@@ -5,6 +5,7 @@ import { USER_ROLE } from '../Auth/auth.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
+import { UserModel } from '../User/user.model';
 
 const createCourseIntoDB = async (payload: ICourse) => {
       const isExists = await CourseModel.findOne({
@@ -46,11 +47,33 @@ const updateCourseInfoInDB = async (id: string, payload: Partial<ICourse>) => {
 };
 
 
+
 const assignTeacherInDB = async (id: string, teacherId: string) => {
+  const teacher = await UserModel.findById(teacherId);
+  
+  if (!teacher) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Teacher not found!');
+  }
+  
+  if (teacher.role !== 'teacher') {
+    throw new AppError(httpStatus.BAD_REQUEST, `The user you are trying to assign is a ${teacher.role}, not a teacher!`);
+  }
+
   return await CourseModel.findByIdAndUpdate(id, { teacher: teacherId }, { new: true });
 };
 
+
 const assignAssistantInDB = async (id: string, assistantId: string) => {
+  const assistant = await UserModel.findById(assistantId);
+  
+  if (!assistant) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Assistant not found!');
+  }
+  
+  if (assistant.role !== 'assistant') {
+    throw new AppError(httpStatus.BAD_REQUEST, `The user you are trying to assign is a ${assistant.role}, not an assistant!`);
+  }
+
   return await CourseModel.findByIdAndUpdate(id, { assistant: assistantId }, { new: true });
 };
 
@@ -59,6 +82,15 @@ const addStudentToCourseInDB = async (id: string, studentId: string) => {
   const course = await CourseModel.findById(id);
   if (!course) throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
   
+  const student = await UserModel.findById(studentId);
+  if (!student) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Student not found!');
+  }
+
+  if (student.role !== 'student') {
+    throw new AppError(httpStatus.BAD_REQUEST, `This user is a ${student.role}. Only students can be added to a course!`);
+  }
+
   if (course.students.includes(studentId as any)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Student already enrolled');
   }
@@ -96,19 +128,97 @@ const deleteCourseFromDB = async (id: string) => {
   return await CourseModel.findByIdAndDelete(id);
 };
 
-const getAllCoursesFromDB = async (user: JwtPayload, query: Record<string, unknown>) => {
-  let filter: any = {};
-  if (user.role === USER_ROLE.teacher) filter.teacher = user.userId;
-  else if (user.role === USER_ROLE.assistant) filter.assistant = user.userId;
-  else if (user.role === USER_ROLE.student) filter.students = { $in: [user.userId] };
 
-  const courseQuery = new QueryBuilder(CourseModel.find(filter).populate('teacher assistant students'), query)
+
+const getAllCoursesFromDB = async (query: Record<string, unknown>) => {
+  const courseQuery = new QueryBuilder(
+    CourseModel.find().populate('teacher assistant students'),
+    query
+  )
     .search(['className', 'subjectName'])
-    .filter().sort().paginate().fields();
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
 
   const result = await courseQuery.modelQuery;
   const meta = await courseQuery.countTotal();
-  return {meta, result };
+  return { meta, result };
+};
+
+
+// const getMyCoursesFromDB = async (user: JwtPayload, query: Record<string, unknown>) => {
+//   const { userId, role } = user;
+//   let filter: any = {};
+
+//   if (role === USER_ROLE.teacher) {
+//     filter.teacher = userId;
+//   } else if (role === USER_ROLE.assistant) {
+//     filter.assistant = userId;
+//   } else if (role === USER_ROLE.student) {
+//     filter.students = { $in: [userId] };
+//   } else {
+//      throw new AppError(httpStatus.FORBIDDEN, "You don't have access to courses");
+//   }
+
+//   const courseQuery = new QueryBuilder(
+//     CourseModel.find(filter).populate('teacher assistant students'),
+//     query
+//   )
+//     .search(['className', 'subjectName'])
+//     .filter()
+//     .sort()
+//     .paginate()
+//     .fields();
+
+//   const result = await courseQuery.modelQuery;
+//   const meta = await courseQuery.countTotal();
+//   return { meta, result };
+// };
+
+
+const getMyCoursesFromDB = async (user: JwtPayload, query: Record<string, unknown>) => {
+  const { userId, role } = user;
+  let filter: any = {};
+
+  if (role === USER_ROLE.teacher) filter.teacher = userId;
+  else if (role === USER_ROLE.assistant) filter.assistant = userId;
+  else if (role === USER_ROLE.student) filter.students = { $in: [userId] };
+
+
+  const courseQuery = new QueryBuilder(
+    CourseModel.find(filter),
+    query
+  )
+    .search(['className', 'subjectName'])
+    .filter()
+    .sort()
+    .paginate();
+
+ 
+  if (role === USER_ROLE.student) {
+    courseQuery.modelQuery.select('-students'); 
+  }
+
+ 
+  let populateOptions: any = [
+    { path: 'teacher', select: 'firstName lastName fullName image email' },
+    { path: 'assistant', select: 'firstName lastName fullName image email' }
+  ];
+
+  if (role === USER_ROLE.teacher || role === USER_ROLE.assistant) {
+    populateOptions.push({
+      path: 'students',
+      select: 'firstName lastName fullName image email contact'
+    });
+  }
+
+  courseQuery.modelQuery.populate(populateOptions);
+
+  const result = await courseQuery.modelQuery;
+  const meta = await courseQuery.countTotal();
+
+  return { meta, result };
 };
 
 export const CourseServices = {
@@ -120,4 +230,5 @@ export const CourseServices = {
   removeStudentFromCourseInDB,
   deleteCourseFromDB,
   getAllCoursesFromDB,
+  getMyCoursesFromDB
 };

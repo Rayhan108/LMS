@@ -9,12 +9,24 @@ import QueryBuilder from "../../builder/QueryBuilder";
 
 
 const updateProfileFromDB = async (id: string, payload: TEditProfile) => {
-  const firstName=payload.firstName
-const lastName=payload.lastName
-const fullName=`${firstName} ${lastName}`
-payload.fullName=fullName
+
+  const currentUser = await UserModel.findById(id);
+
+  if (!currentUser) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+
+  const firstName = payload.firstName || currentUser.firstName;
+  const lastName = payload.lastName || currentUser.lastName;
+
+  if (payload.firstName || payload.lastName) {
+    payload.fullName = `${firstName} ${lastName}`;
+  }
+
   const result = await UserModel.findByIdAndUpdate(id, payload, {
     new: true,
+    runValidators: true,
   });
 
   return result;

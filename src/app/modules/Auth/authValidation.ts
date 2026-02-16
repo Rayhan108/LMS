@@ -23,7 +23,6 @@ const passwordSchema = z
     message: "Password must contain at least one special character",
   });
 
-
 const contactSchema = z
   .string({ message: "Contact is required" })
   .trim()
@@ -36,7 +35,6 @@ const locationSchema = z
   .min(1, { message: "Location is required" })
   .max(100, { message: "Location cannot exceed 100 characters" });
 
-
 const dobSchema = z
   .union([
     z.date(),
@@ -46,73 +44,67 @@ const dobSchema = z
       .min(1, { message: "Date of birth is required" }),
   ])
   .transform((v) => (v instanceof Date ? v : new Date(v)))
-  .refine((d) => !Number.isNaN(d.getTime()), { message: "Invalid date of birth" });
+  .refine((d) => !Number.isNaN(d.getTime()), {
+    message: "Invalid date of birth",
+  });
 
 const loginValidationSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, { message: "Password is required" }),
-    fcmToken: z.string({ message: "fcmToken is required" }).trim(),
+  fcmToken: z.string({ message: "fcmToken is required" }).trim(),
 });
 const AdminloginValidationSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, { message: "Password is required" }),
-
 });
 
-export const registerUserValidationSchema = z
-  .object({
-    firstName: z
-      .string({ message: "First name is required" })
-      .trim()
-      .min(1, { message: "First name cannot be empty" })
-      .max(50, { message: "First name cannot exceed 50 characters" }),
+export const registerUserValidationSchema = z.object({
+  firstName: z
+    .string({ message: "First name is required" })
+    .trim()
+    .min(1, { message: "First name cannot be empty" })
+    .max(50, { message: "First name cannot exceed 50 characters" }),
 
-    lastName: z
-      .string({ message: "Last name is required" })
-      .trim()
-      .min(1, { message: "Last name cannot be empty" })
-      .max(50, { message: "Last name cannot exceed 50 characters" }),
-    fcmToken: z
-      .string({ message: "fcmToken is required" })
-      .trim(),
+  lastName: z
+    .string({ message: "Last name is required" })
+    .trim()
+    .min(1, { message: "Last name cannot be empty" })
+    .max(50, { message: "Last name cannot exceed 50 characters" }),
 
-    email: emailSchema,
+  fcmToken: z.string({ message: "fcmToken is required" }).trim(),
 
+  email: emailSchema,
 
-    contact: contactSchema,
-role: z.enum(["superAdmin", "teacher","assistant","parent","student"]),
-    location: locationSchema,
+  contact: contactSchema,
+  role: z.enum(["superAdmin", "teacher", "assistant", "parent", "student"]),
+  password: passwordSchema,
+});
 
-    dob: dobSchema,
+export const editProfileSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, "First name is required")
+    .max(50, "First name cannot exceed 50 characters")
+    .optional(),
 
-    password: passwordSchema,
-  })
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Last name is required")
+    .max(50, "Last name cannot exceed 50 characters")
+    .optional(),
 
-
-
-export const editProfileSchema = z
-  .object({
-    firstName: z
-      .string()
-      .trim()
-      .min(1, "First name is required")
-      .max(50, "First name cannot exceed 50 characters")
-      .optional(),
-
-    lastName: z
-      .string()
-      .trim()
-      .min(1, "Last name is required")
-      .max(50, "Last name cannot exceed 50 characters")
-      .optional(),
-
-    contact: contactSchema.optional(),
-
-    location: locationSchema.optional(),
-
-    dob: dobSchema.optional(),
-  })
-
+  contact: contactSchema.optional(),
+  gender: z.enum(["male", "female", "others"]).optional(),
+  about: z
+    .string({ message: "About is required" })
+    .trim()
+    .min(1, { message: "About field cannot be empty" })
+    .max(250, { message: "About cannot exceed 250 characters" })
+    .optional(),
+  dob: dobSchema.optional(),
+});
 
 /**
  * Forgot/Verify OTP

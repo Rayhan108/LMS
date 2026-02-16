@@ -27,7 +27,7 @@ router.patch('/remove-student/:id', auth(USER_ROLE.superAdmin), CourseController
 router.delete('/delete/:id', auth(USER_ROLE.superAdmin), CourseControllers.deleteCourse);
 
 // Get All (Role Based)
-router.get('/my-courses', auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.student), CourseControllers.getAllCourses);
+router.get('/my-courses', auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.student), CourseControllers.getMyCourses);
 router.get('/all', auth(USER_ROLE.superAdmin), CourseControllers.getAllCourses);
 
 export const CourseRoutes = router;

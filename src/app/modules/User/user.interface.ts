@@ -8,12 +8,13 @@ export interface TUser {
   lastName: string;
   fullName?: string;
   image?: string;
+  gender?: string;
+  about?: string;
   email: string;
-
+  
   password: string;
-  dob: Date;
+  dob?: Date;
   contact: string;
-  location: string;
   verification?: {
     code: string | null;
     expireDate: Date | null;

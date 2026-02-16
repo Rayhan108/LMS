@@ -46,7 +46,11 @@ const deleteCourse = catchAsync(async (req, res) => {
 });
 
 const getAllCourses = catchAsync(async (req, res) => {
-  const result = await CourseServices.getAllCoursesFromDB(req.user, req.query);
+  const result = await CourseServices.getAllCoursesFromDB(req.query);
+  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
+});
+const getMyCourses = catchAsync(async (req, res) => {
+  const result = await CourseServices.getMyCoursesFromDB(req.user,req.query);
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
 });
 
@@ -60,4 +64,5 @@ export const CourseControllers = {
   removeStudent,
   deleteCourse,
   getAllCourses,
+  getMyCourses
 };
