@@ -14,44 +14,97 @@ import { sendMail } from "../../utils/sendMail";
 import config from "../../config";
 import { sendNotificationToAdmins } from "../../utils/sendNotification";
 
+
 // register new user
+// const registeredUserIntoDB = async (payload: TUser) => {
+//   const existing = await UserModel.isUserExistsByEmail(payload.email);
+//   if (existing) {
+//     throw new AppError(httpStatus.CONFLICT, "This user already exists!");
+//   }
+// const firstName=payload.firstName
+// const lastName=payload.lastName
+// const fullName=`${firstName} ${lastName}`
+// payload.fullName=fullName
+//   const refercode = await generateReferCode();
+
+//   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+//   const newUserData = {
+//     ...payload,
+//     refercode,
+//     verification: {
+//       code: otp,
+//       expireDate: new Date(Date.now() + 1 * 60 * 1000), // 1-minute expiry
+//     },
+//   };
+
+//   console.log("new user----->", newUserData);
+
+//   const user = await UserModel.create(newUserData);
+
+//   // Send OTP email
+//   await sendMail(
+//     payload.email,
+//     "Your OTP Code",
+//     `Your OTP code is: ${otp}. It will expire in 1 minute.`
+//   );
+
+//   return {
+//     result: user,
+//   };
+// };
+
+// Import necessary utilities
+
+
 const registeredUserIntoDB = async (payload: TUser) => {
   const existing = await UserModel.isUserExistsByEmail(payload.email);
   if (existing) {
     throw new AppError(httpStatus.CONFLICT, "This user already exists!");
   }
-const firstName=payload.firstName
-const lastName=payload.lastName
-const fullName=`${firstName} ${lastName}`
-payload.fullName=fullName
-  const refercode = await generateReferCode();
 
+  // Set default full name and refer code
+  payload.fullName = `${payload.firstName} ${payload.lastName}`;
+  const refercode = await generateReferCode();
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Logic: Only Teacher and Assistant need Admin Approval
+  let userStatus = 'in-progress'; 
+  if (payload.role === 'teacher' || payload.role === 'assistant') {
+    userStatus = 'pending';
+  }
 
   const newUserData = {
     ...payload,
     refercode,
+    status: userStatus, // Setting status based on role
     verification: {
       code: otp,
-      expireDate: new Date(Date.now() + 1 * 60 * 1000), // 1-minute expiry
+      expireDate: new Date(Date.now() + 1 * 60 * 1000),
     },
   };
 
-  console.log("new user----->", newUserData);
-
   const user = await UserModel.create(newUserData);
 
-  // Send OTP email
-  await sendMail(
-    payload.email,
-    "Your OTP Code",
-    `Your OTP code is: ${otp}. It will expire in 1 minute.`
-  );
+  // Notify Admin if the new user is a Teacher or Assistant
+  if (payload.role === 'teacher' || payload.role === 'assistant') {
+    await sendNotificationToAdmins(
+      'New Approval Request! 👤',
+      `A new ${payload.role}, ${payload.fullName}, has registered and is waiting for your approval.`,
+      'general'
+    );
+  }
 
-  return {
-    result: user,
-  };
+  // Send OTP for email verification
+  await sendMail(payload.email, "Your OTP Code", `Your OTP code is: ${otp}`);
+
+  return { result: user };
 };
+
+
+
+
+
 export const verifyOTPForRegistration = async (email: string, otp: string) => {
   const user = await UserModel.findOne({ email });
   if (!user) {

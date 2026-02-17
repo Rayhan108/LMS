@@ -69,7 +69,11 @@ router.delete('/delete-profile',auth(USER_ROLE.teacher, USER_ROLE.superAdmin, US
 
 router.delete('/delete-user/:id',auth(USER_ROLE.superAdmin),UserControllers.deleteUser);
 
-
+router.patch(
+  '/approve/:id',
+  auth(USER_ROLE.superAdmin), // Only superAdmin can approve
+  UserControllers.approveUser
+);
 
 
 router.patch(

@@ -5,6 +5,7 @@ import { TEditProfile } from "./user.constant";
 import httpStatus from 'http-status';
 import { UserModel } from "./user.model";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { sendPushNotification } from "../../utils/sendNotification";
 
 
 
@@ -86,7 +87,33 @@ const blockUserFromDB = async (id: string, status: string) => {
   return result;
 };
 
+const approveUserFromDB = async (id: string) => {
+  const user = await UserModel.findById(id);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
 
+  // Check if already approved
+  if (user.status === 'in-progress') {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User is already approved!');
+  }
+
+  const result = await UserModel.findByIdAndUpdate(
+    id,
+    { status: 'in-progress' },
+    { new: true }
+  );
+
+  // Send Push Notification to the Teacher/Assistant
+  await sendPushNotification(
+    id,
+    'Account Approved! 🎉',
+    'Your account has been reviewed and approved by the admin. You can now access all features.',
+    'general'
+  );
+
+  return result;
+};
 
 
 
@@ -94,6 +121,6 @@ export const UserServices = {
   updateProfileFromDB,
   getMyProfileFromDB,
   deletePrifileFromDB,
-  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB
+  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB
 
 };

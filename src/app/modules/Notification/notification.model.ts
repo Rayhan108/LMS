@@ -7,7 +7,7 @@ const notificationSchema = new Schema<INotification>({
   message: { type: String, required: true },
   type: { 
     type: String, 
-    enum: ['task', 'class', 'announcement', 'result'], 
+    enum: ['task', 'class', 'announcement', 'result','general'], 
     required: true 
   },
   isRead: { type: Boolean, default: false }

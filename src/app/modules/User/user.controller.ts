@@ -106,7 +106,17 @@ const toggleUserBlock = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const approveUser = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await UserServices.approveUserFromDB(id as string);
 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User approved successfully",
+    data: result,
+  });
+});
 
 
 export const UserControllers = {
@@ -117,6 +127,6 @@ export const UserControllers = {
   getAllUser,
   getSingleProfile,
   deleteUser,
-  toggleUserBlock,
+  toggleUserBlock,approveUser
  
 };

@@ -3,11 +3,12 @@ import { NotificationModel } from '../modules/Notification/notification.model';
 import { UserModel } from '../modules/User/user.model';
 import { CourseModel } from '../modules/Course/course.model';
 
+type TNotificationType = 'task' | 'class' | 'announcement' | 'result' | 'general';
 export const sendPushNotification = async (
   receiverId: string,
   title: string,
   message: string,
-  type: 'task' | 'class' | 'announcement' | 'result'
+  type: TNotificationType
 ) => {
   try {
     // 1. Save to Database for in-app notification list
@@ -38,15 +39,34 @@ export const sendNotificationToCourse = async (
   courseId: string,
   title: string,
   message: string,
-  type: 'task' | 'class' | 'announcement' | 'result'
+  type: TNotificationType
 ) => {
   const course = await CourseModel.findById(courseId).populate('students');
   if (course && course.students) {
-    // Send notifications to all students in parallel
     await Promise.all(
       course.students.map((student: any) => 
         sendPushNotification(student._id.toString(), title, message, type)
       )
     );
+  }
+}; 
+
+// New Method Added
+export const sendNotificationToAdmins = async (
+  title: string,
+  message: string,
+  type: TNotificationType
+) => {
+  try {
+    const admins = await UserModel.find({ role: 'superAdmin' });
+    if (admins && admins.length > 0) {
+      await Promise.all(
+        admins.map((adminUser) =>
+          sendPushNotification(adminUser._id.toString(), title, message, type)
+        )
+      );
+    }
+  } catch (error) {
+    console.error("Admin Notification Error:", error);
   }
 };

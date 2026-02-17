@@ -10,47 +10,88 @@ import { UserModel } from '../modules/User/user.model';
 
 
 
+// const auth = (...requiredRoles: TUserRole[]) => {
+//   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+//     const authHeader = req.headers.authorization;
+//     const token = authHeader && authHeader.split(' ')[1];
+// // console.log("checking token -------------->",token); 
+//     // checking if the token is missing
+
+//     if (!token) {
+//       // console.log("token null");
+//       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
+//     }
+
+//     // checking if the given token is valid
+//     const decodedUser = verifyToken(token, config.jwt_access_secret as Secret);
+//     const { role, userId, iat } = decodedUser;
+//     // console.log("checking decoded User -------------->",role);
+    
+//     // checking if the user is exist
+//     const user = await UserModel.isUserExistsById(userId);
+
+//     if (!user) {
+//       throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');
+//     }
+
+//     if (requiredRoles && !requiredRoles.includes(role)) {
+//       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized !');
+//     }
+
+//     if (
+//       user.passwordChangedAt &&
+//       UserModel.isJWTIssuedBeforePasswordChanged(
+//         user.passwordChangedAt,
+//         iat as number,
+//       )
+//     ) {
+//       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized !');
+//     }
+
+//     req.user = decodedUser as JwtPayload & { role: string };
+//     next();
+//   });
+// };
+// src/app/middleware/auth.ts
+
 const auth = (...requiredRoles: TUserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-// console.log("checking token -------------->",token); 
-    // checking if the token is missing
 
     if (!token) {
-      // console.log("token null");
       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
-    // checking if the given token is valid
     const decodedUser = verifyToken(token, config.jwt_access_secret as Secret);
-    const { role, userId, iat } = decodedUser;
-    // console.log("checking decoded User -------------->",role);
+    const { role, userId } = decodedUser;
     
-    // checking if the user is exist
-    const user = await UserModel.isUserExistsById(userId);
+ 
+    const user = await UserModel.findById(userId);
 
     if (!user) {
-      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
     }
 
-    if (requiredRoles && !requiredRoles.includes(role)) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized !');
+  
+    if (user.status === 'pending') {
+      throw new AppError(
+        httpStatus.FORBIDDEN, 
+        'Your account is pending admin approval. You cannot access this feature yet.'
+      );
     }
 
-    if (
-      user.passwordChangedAt &&
-      UserModel.isJWTIssuedBeforePasswordChanged(
-        user.passwordChangedAt,
-        iat as number,
-      )
-    ) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized !');
+
+    if (user.status === 'blocked') {
+      throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked by admin!');
+    }
+
+    if (requiredRoles && !requiredRoles.includes(role as TUserRole)) {
+      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
     req.user = decodedUser as JwtPayload & { role: string };
     next();
   });
 };
-
 export default auth;
