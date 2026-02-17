@@ -3,6 +3,7 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { CourseServices } from './course.services';
 import uploadImage from '../../middleware/upload';
+import AppError from '../../errors/AppError';
 
 const createCourse = catchAsync(async (req, res) => {
   const image = req.file ? await uploadImage(req) : undefined;
@@ -54,6 +55,43 @@ const getMyCourses = catchAsync(async (req, res) => {
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
 });
 
+const addMultipleStudents = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { studentIds } = req.body; // Expecting an array of strings
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Please provide an array of student IDs');
+  }
+
+  const result = await CourseServices.addMultipleStudentsToCourseInDB(id as string, studentIds);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `${studentIds.length} students added to the course successfully`,
+    data: result,
+  });
+});
+const removeMultipleStudents = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { studentIds } = req.body;
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Please provide an array of student IDs to remove');
+  }
+
+  const result = await CourseServices.removeMultipleStudentsFromCourseInDB(id as string, studentIds);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `${studentIds.length} students removed from the course successfully`,
+    data: result,
+  });
+});
+
+
+
 export const CourseControllers = {
   createCourse,
   updateCourseInfo,
@@ -64,5 +102,5 @@ export const CourseControllers = {
   removeStudent,
   deleteCourse,
   getAllCourses,
-  getMyCourses
+  getMyCourses,addMultipleStudents,removeMultipleStudents
 };

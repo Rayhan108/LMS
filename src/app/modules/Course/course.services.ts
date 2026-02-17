@@ -105,6 +105,47 @@ const addStudentToCourseInDB = async (id: string, studentId: string) => {
   );
 };
 
+const addMultipleStudentsToCourseInDB = async (id: string, studentIds: string[]) => {
+  // 1. Check if course exists
+  const course = await CourseModel.findById(id);
+  if (!course) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+  // 2. Validate all student IDs (Role must be student and must exist)
+  const validStudents = await UserModel.find({
+    _id: { $in: studentIds },
+    role: 'student',
+    status: 'in-progress'
+  });
+
+  if (validStudents.length !== studentIds.length) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST, 
+      'Some users are not valid students or are not approved yet.'
+    );
+  }
+
+  // 3. Update course: Add students uniquely using $addToSet
+  const result = await CourseModel.findByIdAndUpdate(
+    id,
+    { 
+      $addToSet: { students: { $each: studentIds } } 
+    },
+    { new: true }
+  );
+
+  // 4. Update totalEnrolled count
+  if (result) {
+    result.totalEnrolled = result.students.length;
+    await result.save();
+  }
+
+  return result;
+};
+
+
+
 
 const removeStudentFromCourseInDB = async (id: string, studentId: string) => {
   const course = await CourseModel.findById(id);
@@ -221,6 +262,33 @@ const getMyCoursesFromDB = async (user: JwtPayload, query: Record<string, unknow
   return { meta, result };
 };
 
+
+const removeMultipleStudentsFromCourseInDB = async (id: string, studentIds: string[]) => {
+  // 1. Check if course exists
+  const course = await CourseModel.findById(id);
+  if (!course) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+  // 2. Remove students using $pull with $in
+  const result = await CourseModel.findByIdAndUpdate(
+    id,
+    { 
+      $pull: { students: { $in: studentIds } } 
+    },
+    { new: true }
+  );
+
+  // 3. Update totalEnrolled count based on remaining students
+  if (result) {
+    result.totalEnrolled = result.students.length;
+    await result.save();
+  }
+
+  return result;
+};
+
+
 export const CourseServices = {
   createCourseIntoDB,
   updateCourseInfoInDB,
@@ -230,5 +298,6 @@ export const CourseServices = {
   removeStudentFromCourseInDB,
   deleteCourseFromDB,
   getAllCoursesFromDB,
-  getMyCoursesFromDB
+  getMyCoursesFromDB,
+  addMultipleStudentsToCourseInDB,removeMultipleStudentsFromCourseInDB
 };

@@ -17,8 +17,11 @@ const updateCourseSchema = z.object({
   assistantId: z.string().optional(),
   students: z.array(z.string()).optional(),
 });
-
+const addStudentsSchema = z.object({
+  studentIds: z.array(z.string( "Student ID must be a string" ))
+    .min(1, "At least one student ID is required"),
+});
 export const CourseValidations = {
   createCourseSchema,
-  updateCourseSchema,
+  updateCourseSchema,addStudentsSchema
 };
