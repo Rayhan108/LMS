@@ -11,6 +11,8 @@ import { ClassRoutes } from "../modules/Class/class.routes";
 import { TaskRoutes } from "../modules/Task/task.routes";
 import { SubmissionRoutes } from "../modules/Submission/submission.routes";
 import { AttendanceRoutes } from "../modules/Attendence/attendence.routes";
+import { ReportRoutes } from "../modules/Report/report.routes";
+import { NotificationRoutes } from "../modules/Notification/notification.routes";
 
 const router = Router();
 
@@ -22,6 +24,10 @@ const moduleRoutes = [
   {
     path: "/user",
     route: UserRoutes,
+  },
+  {
+    path: "/notification",
+    route: NotificationRoutes,
   },
   {
     path: "/about",
@@ -62,6 +68,10 @@ const moduleRoutes = [
   {
     path: "/attendance",
     route: AttendanceRoutes,
+  },
+  {
+    path: "/report",
+    route: ReportRoutes,
   },
 ];
 

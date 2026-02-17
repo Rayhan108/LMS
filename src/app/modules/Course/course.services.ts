@@ -181,8 +181,8 @@ const getMyCoursesFromDB = async (user: JwtPayload, query: Record<string, unknow
   const { userId, role } = user;
   let filter: any = {};
 
-  if (role === USER_ROLE.teacher) filter.teacher = userId;
-  else if (role === USER_ROLE.assistant) filter.assistant = userId;
+  if (role === USER_ROLE.teacher) filter.teacherId = userId;
+  else if (role === USER_ROLE.assistant) filter.assistantId = userId;
   else if (role === USER_ROLE.student) filter.students = { $in: [userId] };
 
 
@@ -202,8 +202,8 @@ const getMyCoursesFromDB = async (user: JwtPayload, query: Record<string, unknow
 
  
   let populateOptions: any = [
-    { path: 'teacher', select: 'firstName lastName fullName image email' },
-    { path: 'assistant', select: 'firstName lastName fullName image email' }
+    { path: 'teacherId', select: 'firstName lastName fullName image email' },
+    { path: 'assistantId', select: 'firstName lastName fullName image email' }
   ];
 
   if (role === USER_ROLE.teacher || role === USER_ROLE.assistant) {
