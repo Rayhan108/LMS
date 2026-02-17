@@ -21,12 +21,12 @@ const updateCourseInfo = catchAsync(async (req, res) => {
 
 
 const assignTeacher = catchAsync(async (req, res) => {
-  const result = await CourseServices.assignTeacherInDB(req.params.id as string, req.body.teacher);
+  const result = await CourseServices.assignTeacherInDB(req.params.id as string, req.body.teacherId);
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Teacher assigned', data: result });
 });
 
 const assignAssistant = catchAsync(async (req, res) => {
-  const result = await CourseServices.assignAssistantInDB(req.params.id as string, req.body.assistant);
+  const result = await CourseServices.assignAssistantInDB(req.params.id as string, req.body.assistantId);
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Assistant assigned', data: result });
 });
 

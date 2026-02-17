@@ -7,8 +7,8 @@ export interface ICourse {
   subjectName: string;
   image?: string;
   status: TCourseStatus;
-  teacher?: Types.ObjectId;
-  assistant?: Types.ObjectId;
+  teacherId?: Types.ObjectId;
+  assistantId?: Types.ObjectId;
   students: Types.ObjectId[];
   totalEnrolled: number; 
 }

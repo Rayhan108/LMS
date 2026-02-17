@@ -59,7 +59,7 @@ const assignTeacherInDB = async (id: string, teacherId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, `The user you are trying to assign is a ${teacher.role}, not a teacher!`);
   }
 
-  return await CourseModel.findByIdAndUpdate(id, { teacher: teacherId }, { new: true });
+  return await CourseModel.findByIdAndUpdate(id, { teacherId: teacherId }, { new: true });
 };
 
 
@@ -74,7 +74,7 @@ const assignAssistantInDB = async (id: string, assistantId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, `The user you are trying to assign is a ${assistant.role}, not an assistant!`);
   }
 
-  return await CourseModel.findByIdAndUpdate(id, { assistant: assistantId }, { new: true });
+  return await CourseModel.findByIdAndUpdate(id, { assistantId: assistantId }, { new: true });
 };
 
 
@@ -132,7 +132,7 @@ const deleteCourseFromDB = async (id: string) => {
 
 const getAllCoursesFromDB = async (query: Record<string, unknown>) => {
   const courseQuery = new QueryBuilder(
-    CourseModel.find().populate('teacher assistant students'),
+    CourseModel.find().populate('teacherId assistantId students'),
     query
   )
     .search(['className', 'subjectName'])
