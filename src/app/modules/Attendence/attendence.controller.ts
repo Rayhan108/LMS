@@ -48,8 +48,8 @@ const getMyAttendance = catchAsync(async (req, res) => {
 });
 
 const getOverallStats = catchAsync(async (req, res) => {
-  const { courseId } = req.params;
-  const result = await AttendanceServices.getAttendanceStatsFromDB(courseId as string);
+  const { courseId,studentId} = req.params;
+  const result = await AttendanceServices.getAttendanceStatsFromDB(courseId as string,studentId as string);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -57,10 +57,21 @@ const getOverallStats = catchAsync(async (req, res) => {
     data: result
   });
 });
-
+const getMyStats = catchAsync(async (req, res) => {
+  const { courseId } = req.params;
+  const result = await AttendanceServices.getAttendanceStatsFromDB(courseId as string, req.user.userId as string);
+  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Your performance statistics retrieved',
+    data: result
+  });
+});
 export const AttendanceControllers = {
   markAttendance,
   getAllAttendance,
   getMyAttendance,
-  getOverallStats
+  getOverallStats,
+  getMyStats
 };

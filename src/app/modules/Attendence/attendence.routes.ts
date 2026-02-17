@@ -32,4 +32,9 @@ router.get(
   AttendanceControllers.getOverallStats
 );
 
+router.get(
+  '/my-stats/:courseId', 
+  auth('student'), 
+  AttendanceControllers.getMyStats
+);
 export const AttendanceRoutes = router;

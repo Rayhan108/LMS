@@ -71,9 +71,18 @@ const getStudentAttendanceFromDB = async (studentId: string, query: Record<strin
 };
 
 
-const getAttendanceStatsFromDB = async (courseId: string) => {
+// src/app/modules/Attendance/attendance.service.ts
+
+const getAttendanceStatsFromDB = async (courseId: string, studentId?: string) => {
+  const matchQuery: any = { course: new mongoose.Types.ObjectId(courseId) };
+  
+
+  if (studentId) {
+    matchQuery.student = new mongoose.Types.ObjectId(studentId);
+  }
+
   const stats = await AttendanceModel.aggregate([
-    { $match: { course: new mongoose.Types.ObjectId(courseId) } },
+    { $match: matchQuery },
     {
       $group: {
         _id: "$status",
@@ -82,11 +91,30 @@ const getAttendanceStatsFromDB = async (courseId: string) => {
     }
   ]);
 
+  // set default value
+  const counts = {
+    absent: stats.find(s => s._id === 'absent')?.count || 0,
+    late: stats.find(s => s._id === 'late')?.count || 0,
+    onTime: stats.find(s => s._id === 'on time')?.count || 0,
+  };
+
+  const total = counts.absent + counts.late + counts.onTime;
+
+  // percentage calc (Division by zero )
+  const calculatePercentage = (value: number) => 
+    total > 0 ? parseFloat(((value / total) * 100).toFixed(2)) : 0;
+
   return {
-    absent: stats.find((s:any) => s._id === 'absent')?.count || 0,
-    late: stats.find((s:any) => s._id === 'late')?.count || 0,
-    onTime: stats.find((s:any) => s._id === 'on time')?.count || 0,
-    total: stats.reduce((acc:any, curr:any) => acc + curr.count, 0)
+    course: courseId,
+    student: studentId || "All Students",
+    totalDays: total,
+    counts,
+    percentages: {
+      absent: calculatePercentage(counts.absent),
+      late: calculatePercentage(counts.late),
+      onTime: calculatePercentage(counts.onTime),
+      attendanceRate: calculatePercentage(counts.onTime + counts.late) 
+    }
   };
 };
 
