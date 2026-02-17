@@ -13,6 +13,7 @@ import { SubmissionRoutes } from "../modules/Submission/submission.routes";
 import { AttendanceRoutes } from "../modules/Attendence/attendence.routes";
 import { ReportRoutes } from "../modules/Report/report.routes";
 import { NotificationRoutes } from "../modules/Notification/notification.routes";
+import { AnnouncementRoutes } from "../modules/Announcement/announcement.routes";
 
 const router = Router();
 
@@ -72,6 +73,10 @@ const moduleRoutes = [
   {
     path: "/report",
     route: ReportRoutes,
+  },
+  {
+    path: '/announcements',
+    route: AnnouncementRoutes
   },
 ];
 
