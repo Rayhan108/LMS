@@ -1,9 +1,16 @@
 import QueryBuilder from "../../builder/QueryBuilder";
+import { sendNotificationToCourse } from "../../utils/sendNotification";
 import { ITask } from "./task.interface";
 import { TaskModel } from "./task.model";
 
 const createTaskIntoDB = async (payload: ITask) => {
   const result = await TaskModel.create(payload);
+    await sendNotificationToCourse(
+    payload.course.toString(),
+    `New ${payload.type.toUpperCase()}! 📝`,
+    `A new ${payload.type} "${payload.title}" has been posted.`,
+    'task'
+  );
   return result;
 };
 

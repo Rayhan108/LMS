@@ -1,9 +1,19 @@
 import QueryBuilder from "../../builder/QueryBuilder";
+import { sendNotificationToCourse, sendPushNotification } from "../../utils/sendNotification";
 import { IAnnouncement, IComment } from "./announcement.interface";
 import { AnnouncementModel, CommentModel } from "./announcement.model";
 
 const createAnnouncementIntoDB = async (payload: IAnnouncement) => {
-  return await AnnouncementModel.create(payload);
+  const result = await AnnouncementModel.create(payload);
+
+  // Notify all students in the course
+  await sendNotificationToCourse(
+    payload.courseId.toString(),
+    'New Announcement! 📢',
+    `New update from teacher: "${payload.details.substring(0, 40)}..."`,
+    'announcement'
+  );
+  return result;
 };
 
 const getAnnouncementsByCourseFromDB = async (courseId: string, query: Record<string, unknown>) => {
@@ -38,6 +48,19 @@ const getAnnouncementsByCourseFromDB = async (courseId: string, query: Record<st
 
 const addCommentIntoDB = async (payload: IComment) => {
   const result = await CommentModel.create(payload);
+
+  // If this is a reply (teacher/assistant replying to a student)
+  if (payload.parentCommentId) {
+    const parentComment = await CommentModel.findById(payload.parentCommentId);
+    if (parentComment) {
+      await sendPushNotification(
+        parentComment.user.toString(),
+        'New Reply on your comment! 💬',
+        `Teacher replied to your comment in the course announcement.`,
+        'announcement'
+      );
+    }
+  }
   return await result.populate('user', 'fullName image role');
 };
 

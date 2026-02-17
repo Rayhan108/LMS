@@ -3,6 +3,7 @@ import AppError from "../../errors/AppError";
 import { TaskModel } from "../Task/task.model";
 import { ISubmission } from "./submission.interface";
 import { SubmissionModel } from "./submission.model";
+import { sendPushNotification } from "../../utils/sendNotification";
 
 const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
   const task = await TaskModel.findById(payload.task);
@@ -25,6 +26,15 @@ const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => 
     { ...payload, isMarked: true },
     { new: true }
   );
+   if (result) {
+    // Notify the specific student
+    await sendPushNotification(
+      result.student.toString(),
+      'Result Published! 🎉',
+      `Your marks for the task have been published. Check it now!`,
+      'result'
+    );
+  }
   return result;
 };
 
