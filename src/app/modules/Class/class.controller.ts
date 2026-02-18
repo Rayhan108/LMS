@@ -5,8 +5,8 @@ import { ClassServices } from "./class.services";
 import httpStatus from 'http-status';
 
 const createClass = catchAsync(async (req, res) => {
-  const pdf = req.file ? await uploadImage(req) : undefined;
-  const result = await ClassServices.createClassIntoDB({ ...req.body, pdf, createdBy: req.user.userId });
+  const document = req.file ? await uploadImage(req) : undefined;
+  const result = await ClassServices.createClassIntoDB({ ...req.body, document, createdBy: req.user.userId });
   sendResponse(res, { statusCode: 201, success: true, message: 'Class added', data: result });
 });
 const getClassesByCourse = catchAsync(async (req, res) => {

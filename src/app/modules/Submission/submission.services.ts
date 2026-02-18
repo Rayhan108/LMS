@@ -4,6 +4,7 @@ import { TaskModel } from "../Task/task.model";
 import { ISubmission } from "./submission.interface";
 import { SubmissionModel } from "./submission.model";
 import { sendPushNotification } from "../../utils/sendNotification";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
   const task = await TaskModel.findById(payload.task);
@@ -16,6 +17,88 @@ const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
   const result = await SubmissionModel.create(payload);
   return result;
 };
+
+// Fetch a single submission by its ID
+const getSingleSubmissionFromDB = async (submissionId: string) => {
+  return await SubmissionModel.findById(submissionId).populate([
+    { path: 'student', select: 'fullName image email contact' },
+    { path: 'task', select: 'title type details document endDate endTime' },
+    { path: 'course', select: 'className subjectName' }
+  ]);
+};
+
+
+const getMySubmissionsFromDB = async (
+  studentId: string,
+  courseId: string,
+  query: Record<string, unknown>
+) => {
+  const { type, status, ...restQuery } = query;
+
+
+  const taskQueryObj: any = { course: courseId };
+  if (type) taskQueryObj.type = type;
+
+  let taskIds: any[] = [];
+  
+
+  if (type || status) {
+    let tasks = await TaskModel.find(taskQueryObj);
+
+    if (status) {
+      tasks = tasks.filter((t: any) => t.status === status);
+    }
+    
+    taskIds = tasks.map(t => t._id);
+
+
+    if (taskIds.length === 0) {
+      return { 
+        meta: { page: 1, limit: 10, total: 0, totalPage: 0 }, 
+        result: [] 
+      };
+    }
+  }
+
+
+  const filterCriteria: any = { 
+    student: studentId, 
+    course: courseId 
+  };
+
+
+  if (type || status) {
+    filterCriteria.task = { $in: taskIds };
+  }
+
+  const submissionQuery = new QueryBuilder(
+    SubmissionModel.find(filterCriteria),
+    restQuery
+  )
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  submissionQuery.modelQuery.populate([
+    { 
+      path: 'task', 
+      select: 'title type startDate endDate status' 
+    },
+    { 
+      path: 'course', 
+      select: 'className subjectName' 
+    }
+  ]);
+
+  const result = await submissionQuery.modelQuery;
+  const meta = await submissionQuery.countTotal();
+
+  return { meta, result };
+};
+
+
+
 
 const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => {
   const submission = await SubmissionModel.findById(id);
@@ -38,18 +121,58 @@ const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => 
   return result;
 };
 
-const getSubmissionsByTaskFromDB = async (taskId: string) => {
-  return await SubmissionModel.find({ task: taskId }).populate('student', 'firstName lastName fullName image');
+// Fetch all submissions for a specific task with QueryBuilder support
+
+
+const getSubmissionsByTaskFromDB = async (taskId: string, query: Record<string, unknown>) => {
+  const { type, status, ...restQuery } = query;
+
+
+  const targetTask = await TaskModel.findById(taskId);
+
+  if (!targetTask) {
+    return { meta: { page: 1, limit: 10, total: 0, totalPage: 0 }, result: [] };
+  }
+
+  if (type && targetTask.type !== type) {
+    return { meta: { page: 1, limit: 10, total: 0, totalPage: 0 }, result: [] };
+  }
+
+  if (status && (targetTask as any).status !== status) {
+    return { meta: { page: 1, limit: 10, total: 0, totalPage: 0 }, result: [] };
+  }
+
+  const submissionQuery = new QueryBuilder(
+    SubmissionModel.find({ task: taskId }),
+    restQuery
+  )
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  
+  submissionQuery.modelQuery.populate([
+    { 
+      path: 'student', 
+      select: 'fullName image email contact' 
+    },
+    { 
+      path: 'task', 
+      select: 'title type status endDate endTime'
+    }
+  ]);
+
+  const result = await submissionQuery.modelQuery;
+  const meta = await submissionQuery.countTotal();
+
+  return { meta, result };
 };
 
-const getMySubmissionsFromDB = async (studentId: string, courseId: string) => {
-  return await SubmissionModel.find({ student: studentId, course: courseId })
-    .populate('task', 'title type');
-};
 
 export const SubmissionServices = {
   submitTaskIntoDB,
   markSubmissionInDB,
   getSubmissionsByTaskFromDB,
-  getMySubmissionsFromDB
+  getMySubmissionsFromDB,getSingleSubmissionFromDB
 };

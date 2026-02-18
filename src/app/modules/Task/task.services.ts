@@ -30,12 +30,37 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-const getTasksByCourseFromDB = async (courseId: string, type?: string) => {
-  const filter: any = { course: courseId };
-  if (type) filter.type = type;
+
+const getTasksByCourseFromDB = async (courseId: string, query: Record<string, unknown>) => {
+  // 1. Create a copy of the query
+  const queryObj = { ...query };
+
+  // 2. Remove 'status' from queryObj because it's a virtual field and QueryBuilder will fail to find it in DB
+  const statusFilter = queryObj.status;
+  delete queryObj.status;
+
+  // 3. Initialize QueryBuilder
+  const taskQuery = new QueryBuilder(
+    TaskModel.find({ course: courseId }),
+    queryObj
+  )
+    .search(['title']) // Title দিয়ে সার্চ করা যাবে
+    .filter()         // 'type' (homework/exam) ফিল্টার এখানে অটোমেটিক হবে
+    .sort()
+    .paginate()
+    .fields();
+
+  // 4. Execute the query
+  let result = await taskQuery.modelQuery;
+
+  // 5. Manually filter by virtual 'status' (active / time over) if provided in query
+  if (statusFilter) {
+    result = result.filter((task: any) => task.status === statusFilter);
+  }
+
+  const meta = await taskQuery.countTotal();
   
-  const result = await TaskModel.find(filter).sort({ endDate: 1, endTime: 1 });
-  return result;
+  return { meta, result };
 };
 
 export const TaskServices = {

@@ -38,4 +38,19 @@ router.get(
   SubmissionControllers.getSubmissionsByTask
 );
 
+// all submission (History)
+router.get(
+  '/my-submissions/:courseId',
+  auth('student'),
+  SubmissionControllers.getMySubmissions
+);
+
+// single submission for teacher and student
+router.get(
+  '/:submissionId',
+  auth('teacher', 'assistant', 'student'),
+  SubmissionControllers.getSingleSubmission
+);
+
+
 export const SubmissionRoutes = router;

@@ -27,9 +27,9 @@ const createTask = catchAsync(async (req, res) => {
 
 const getTasksByCourse = catchAsync(async (req, res) => {
   const { courseId } = req.params;
-  const { type } = req.query; // type can be 'homework' or 'exam'
   
-  const result = await TaskServices.getTasksByCourseFromDB(courseId as string, type as string);
+  // Pass req.query to service for QueryBuilder
+  const result = await TaskServices.getTasksByCourseFromDB(courseId as string, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

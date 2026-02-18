@@ -1,9 +1,17 @@
 import QueryBuilder from "../../builder/QueryBuilder";
+import AppError from "../../errors/AppError";
 import { sendNotificationToCourse, sendPushNotification } from "../../utils/sendNotification";
+import { CourseModel } from "../Course/course.model";
 import { IAnnouncement, IComment } from "./announcement.interface";
 import { AnnouncementModel, CommentModel } from "./announcement.model";
-
+import httpStatus from 'http-status';
 const createAnnouncementIntoDB = async (payload: IAnnouncement) => {
+
+  const isCourseExist = await CourseModel.findById(payload.courseId);
+  if (!isCourseExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "Course not found! You cannot create an announcement for a non-existing course.");
+  }
+
   const result = await AnnouncementModel.create(payload);
 
   // Notify all students in the course
@@ -47,6 +55,21 @@ const getAnnouncementsByCourseFromDB = async (courseId: string, query: Record<st
 };
 
 const addCommentIntoDB = async (payload: IComment) => {
+
+
+      // 1. Validate if the Announcement exists
+  const isAnnouncementExist = await AnnouncementModel.findById(payload.announcementId);
+  if (!isAnnouncementExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "Announcement not found! You cannot comment on a non-existing announcement.");
+  }
+
+  // 2. If it's a reply, validate if the parent comment exists
+  if (payload.parentCommentId) {
+    const isParentCommentExist = await CommentModel.findById(payload.parentCommentId);
+    if (!isParentCommentExist) {
+      throw new AppError(httpStatus.NOT_FOUND, "The comment you are trying to reply to does not exist.");
+    }
+  }
   const result = await CommentModel.create(payload);
 
   // If this is a reply (teacher/assistant replying to a student)

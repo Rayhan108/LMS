@@ -21,7 +21,9 @@ const taskSchema = new Schema<ITask>({
 // Virtual field for dynamic status
 taskSchema.virtual('status').get(function() {
   const now = new Date();
-  const endDateTime = new Date(`${this.endDate}T${this.endTime}`);
+
+  const endDateTime = new Date(`${this.endDate} ${this.endTime}`);
+  
   return now > endDateTime ? 'time over' : 'active';
 });
 
