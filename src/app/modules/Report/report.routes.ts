@@ -1,6 +1,7 @@
 import express from 'express';
 import auth from '../../middleware/auth';
 import { ReportControllers } from './report.controller';
+import { USER_ROLE } from '../Auth/auth.constant';
 
 const router = express.Router();
 
@@ -23,5 +24,27 @@ router.get(
   auth('teacher', 'assistant', 'superAdmin'),
   ReportControllers.getTabularReport
 );
+
+
+//(Parent Home - Image 2)
+router.get(
+  '/child-courses/:childId',
+  auth(USER_ROLE.parent),
+  ReportControllers.getChildEnrolledCourses
+);
+
+// (View Progress - Image 1)
+router.get(
+  '/child-progress/:courseId/:childId',
+  auth(USER_ROLE.parent),
+  ReportControllers.getChildCourseProgress
+);
+
+
+
+
+
+
+
 
 export const ReportRoutes = router;

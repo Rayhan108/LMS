@@ -117,7 +117,10 @@ const approveUser = catchAsync(async (req, res) => {
     data: result,
   });
 });
-
+const assignParent = catchAsync(async (req, res) => {
+  const result = await UserServices.assignParentToStudentInDB(req.user.userId, req.body.parentId);
+  sendResponse(res, { statusCode: 200, success: true, message: "Parent assigned successfully", data: result });
+});
 
 export const UserControllers = {
   updateProfile,
@@ -127,6 +130,6 @@ export const UserControllers = {
   getAllUser,
   getSingleProfile,
   deleteUser,
-  toggleUserBlock,approveUser
+  toggleUserBlock,approveUser,assignParent
  
 };

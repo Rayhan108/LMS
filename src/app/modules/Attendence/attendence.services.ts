@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { IAttendance } from "./attendence.interface";
 import { AttendanceModel } from "./attendence.model";
+import { notifyParentOfStudent } from "../../utils/sendNotification";
 
 
 
@@ -13,6 +14,15 @@ const markAttendanceInDB = async (attendances: IAttendance[]) => {
       data,
       { upsert: true, new: true }
     );
+      // Notify Parent about individual attendance status
+    if (res) {
+        await notifyParentOfStudent(
+            data.student.toString(),
+            'Attendance Alert 🔔',
+            `[StudentName] has been marked "${data.status}" for today's class.`,
+            'general'
+        );
+    }
     results.push(res);
   }
   return results;

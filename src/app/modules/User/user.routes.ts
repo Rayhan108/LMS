@@ -83,5 +83,7 @@ router.patch(
 );
 
 
+router.patch('/assign-parent', auth('student'), UserControllers.assignParent);
+
 
 export const UserRoutes = router;

@@ -289,6 +289,40 @@ const removeMultipleStudentsFromCourseInDB = async (id: string, studentIds: stri
 };
 
 
+
+const getTeacherDashboardStatsFromDB = async (userId: string) => {
+
+  const assignedCourses = await CourseModel.find({
+    $or: [{ teacherId: userId }, { assistantId: userId }],
+  });
+
+  const totalCourses = assignedCourses.length;
+
+
+  const allStudentIds = assignedCourses.reduce((acc: string[], course) => {
+    const studentIds = course.students.map((id) => id.toString());
+    return [...acc, ...studentIds];
+  }, []);
+
+
+  const uniqueStudentsCount = new Set(allStudentIds).size;
+
+  return {
+    totalAssignedCourses: totalCourses,
+    totalUniqueStudents: uniqueStudentsCount,
+  };
+}
+
+
+
+
+
+
+
+
+
+
+
 export const CourseServices = {
   createCourseIntoDB,
   updateCourseInfoInDB,
@@ -299,5 +333,5 @@ export const CourseServices = {
   deleteCourseFromDB,
   getAllCoursesFromDB,
   getMyCoursesFromDB,
-  addMultipleStudentsToCourseInDB,removeMultipleStudentsFromCourseInDB
+  addMultipleStudentsToCourseInDB,removeMultipleStudentsFromCourseInDB,getTeacherDashboardStatsFromDB
 };

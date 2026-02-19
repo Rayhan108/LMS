@@ -66,8 +66,47 @@ const getTabularReport = catchAsync(async (req, res) => {
   });
 });
 
+
+// Parent Home: Get all enrolled courses of a child
+const getChildEnrolledCourses = catchAsync(async (req, res) => {
+  const { childId } = req.params;
+  const parentId = req.user.userId; // Logged in parent's ID from token
+
+  const result = await ReportServices.getChildEnrolledCoursesFromDB(
+    parentId,
+    childId as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Child's enrolled courses retrieved successfully",
+    data: result,
+  });
+});
+
+// View Progress Page: Get specific course performance of a child
+const getChildCourseProgress = catchAsync(async (req, res) => {
+  const { courseId, childId } = req.params;
+  const parentId = req.user.userId;
+
+  const result = await ReportServices.getChildCourseProgressFromDB(
+    parentId,
+    childId as string,
+    courseId as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Child's course progress details retrieved successfully",
+    data: result,
+  });
+});
+
+
 export const ReportControllers = {
   getMyReport,
   getCourseOverview,
-  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport
+  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport,getChildCourseProgress,getChildEnrolledCourses
 };

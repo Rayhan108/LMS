@@ -115,12 +115,33 @@ const approveUserFromDB = async (id: string) => {
   return result;
 };
 
+const assignParentToStudentInDB = async (studentId: string, parentId: string) => {
+  // 1. Check if Parent exists and has the 'parent' role
+  const parent = await UserModel.findOne({ _id: parentId, role: 'parent' });
+  if (!parent) {
+    throw new AppError(httpStatus.NOT_FOUND, "Valid Parent not found with this ID");
+  }
 
+  // 2. Update student document with parentId
+  const result = await UserModel.findByIdAndUpdate(
+    studentId,
+    { parentId: parentId },
+    { new: true }
+  );
+  // Notify Parent
+  await sendPushNotification(
+    parentId,
+    'New Student Linked! 👨‍👩‍👦',
+    `${result?.fullName} has added you as their parent in Educology.`,
+    'general'
+  );
+  return result;
+};
 
 export const UserServices = {
   updateProfileFromDB,
   getMyProfileFromDB,
   deletePrifileFromDB,
-  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB
+  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB,assignParentToStudentInDB
 
 };

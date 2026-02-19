@@ -3,7 +3,7 @@ import AppError from "../../errors/AppError";
 import { TaskModel } from "../Task/task.model";
 import { ISubmission } from "./submission.interface";
 import { SubmissionModel } from "./submission.model";
-import { sendPushNotification } from "../../utils/sendNotification";
+import { notifyParentOfStudent, sendPushNotification } from "../../utils/sendNotification";
 import QueryBuilder from "../../builder/QueryBuilder";
 
 const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
@@ -117,6 +117,14 @@ const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => 
       `Your marks for the task have been published. Check it now!`,
       'result'
     );
+        // 2. Notify Parent
+    await notifyParentOfStudent(
+      result.student.toString(),
+      'Academic Progress Update 📈',
+      `[StudentName]'s latest homework/exam results are now available.`,
+      'result'
+    );
+  
   }
   return result;
 };

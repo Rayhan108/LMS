@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
-
+import httpStatus from "http-status";
 import { TaskModel } from "../Task/task.model";
 import { SubmissionModel } from "../Submission/submission.model";
 import { StudentProgressModel } from "./report.model";
 import { AttendanceModel } from "../Attendence/attendence.model";
 import { CourseModel } from "../Course/course.model";
+import { UserModel } from "../User/user.model";
+import AppError from "../../errors/AppError";
 
 const syncAndGetStudentProgress = async (
   courseId: string,
@@ -132,25 +134,35 @@ const getCourseDashboardOverview = async (courseId: string) => {
   };
 };
 
+// src/app/modules/Report/report.services.ts
+
 const getStudentListWithStatus = async (courseId: string) => {
-    // 1. Fetch the course and its enrolled students list
-    const course = await CourseModel.findById(courseId).populate('students');
+    // 1. Fetch course and populate students, teacher, and assistant
+    const course = await CourseModel.findById(courseId)
+        .populate('students')
+        .populate({
+            path: 'teacherId',
+            select: 'fullName image contact email'
+        })
+        .populate({
+            path: 'assistantId',
+            select: 'fullName image contact email'
+        })
+        .lean();
     
     if (!course) {
         throw new Error("Course not found");
     }
 
-    // 2. Fetch all existing progress records for this course
-    const progressRecords = await StudentProgressModel.find({ course: courseId });
+    // 2. Fetch all progress records for this course
+    const progressRecords = await StudentProgressModel.find({ course: courseId }).lean();
 
-    // 3. Map through all enrolled students to ensure everyone is included
-    const fullStudentList = course.students.map((student: any) => {
-        // Find if this student has a progress record
+    // 3. Map through all enrolled students
+    const studentList = (course.students as any[]).map((student: any) => {
         const progress = progressRecords.find(
             (p) => p.student.toString() === student._id.toString()
         );
 
-        // If progress exists, return it with student details
         if (progress) {
             return {
                 _id: progress._id,
@@ -169,7 +181,6 @@ const getStudentListWithStatus = async (courseId: string) => {
             };
         }
 
-        // If no progress record exists yet, return default "on track" status with 0 values
         return {
             student: {
                 _id: student._id,
@@ -182,13 +193,19 @@ const getStudentListWithStatus = async (courseId: string) => {
             avgGrade: 0,
             homeworkCompletedRate: 0,
             overdueRate: 0,
-            message: "No activity recorded yet"
+            updatedAt: new Date()
         };
     });
 
-    return fullStudentList;
+    // 4. Return both Instructor Info and the Student List
+    return {
+        instructorInfo: {
+            teacher: course.teacherId || null,
+            assistant: course.assistantId || null
+        },
+        studentList: studentList
+    };
 };
-
 
 const getOverallCourseAcademicStats = async (courseId: string) => {
   const course = await CourseModel.findById(courseId);
@@ -327,10 +344,63 @@ const getDetailedTabularReport = async (courseId: string, searchTerm: string = '
   return report;
 };
 
+
+
+
+const getChildEnrolledCoursesFromDB = async (parentId: string, childId: string) => {
+  // 1. Security Check: Verify if this child belongs to this parent
+  const child = await UserModel.findOne({ _id: childId, parentId: parentId });
+  if (!child) {
+    throw new AppError(httpStatus.FORBIDDEN, "Unauthorized: This student is not linked to your account.");
+  }
+
+  // 2. Find courses where the child is enrolled
+  const courses = await CourseModel.find({ students: childId })
+    .populate({ path: 'teacherId', select: 'fullName' }) // Image 2 requires Teacher Name
+    .lean();
+
+  return {
+    childInfo: {
+      fullName: child.fullName,
+      image: child.image,
+      contact: child.contact
+    },
+    enrolledCourses: courses
+  };
+};
+
+
+const getChildCourseProgressFromDB = async (parentId: string, childId: string, courseId: string) => {
+  // 1. Verify Parent-Child Relationship
+  const isAuthorized = await UserModel.findOne({ _id: childId, parentId: parentId });
+  if (!isAuthorized) {
+    throw new AppError(httpStatus.FORBIDDEN, "Access Denied");
+  }
+
+  // 2. Reuse syncAndGetStudentProgress to get latest calculated stats
+  const progress = await syncAndGetStudentProgress(courseId, childId);
+
+  // 3. Get Course & Instructor Details
+  const course = await CourseModel.findById(courseId)
+    .populate({ path: 'teacherId', select: 'fullName image contact' })
+    .populate({ path: 'assistantId', select: 'fullName image contact' })
+    .lean();
+
+  return {
+    student: isAuthorized, // Student Name, Img, Contact
+    teacher: course?.teacherId || null,
+    assistant: course?.assistantId || null,
+    progress: progress // All 4 rates (Attendance, HW, Grade, Overdue)
+  };
+};
+
+
+
+
 export const ReportServices = {
   syncAndGetStudentProgress,
   getCourseDashboardOverview,
   getStudentListWithStatus,
   getOverallCourseAcademicStats,
-  getDetailedTabularReport
+  getDetailedTabularReport,getChildEnrolledCoursesFromDB,getChildCourseProgressFromDB
 };

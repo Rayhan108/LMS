@@ -89,7 +89,18 @@ const removeMultipleStudents = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getTeacherDashboardStats = catchAsync(async (req, res) => {
+  const userId = req.user.userId;
 
+  const result = await CourseServices.getTeacherDashboardStatsFromDB(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Teacher dashboard statistics retrieved successfully',
+    data: result,
+  });
+});
 
 
 export const CourseControllers = {
@@ -102,5 +113,5 @@ export const CourseControllers = {
   removeStudent,
   deleteCourse,
   getAllCourses,
-  getMyCourses,addMultipleStudents,removeMultipleStudents
+  getMyCourses,addMultipleStudents,removeMultipleStudents,getTeacherDashboardStats
 };

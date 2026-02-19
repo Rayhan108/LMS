@@ -37,6 +37,13 @@ router.patch(
   auth(USER_ROLE.superAdmin), 
   CourseControllers.removeMultipleStudents
 );
+// Teacher/Assistant Dashboard Stats
+router.get(
+  '/teacher-stats',
+  auth('teacher', 'assistant'),
+  CourseControllers.getTeacherDashboardStats
+);
+
 
 // Get All (Role Based)
 router.get('/my-courses', auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.student), CourseControllers.getMyCourses);

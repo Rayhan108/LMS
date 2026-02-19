@@ -29,7 +29,7 @@ export interface TUser {
   createdAt?: Date;
   updatedAt?: Date;
    isOtpVerified:boolean;
-
+parentId?: mongoose.Types.ObjectId;
 }
 
 export interface IUserMethods {

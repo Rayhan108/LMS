@@ -70,3 +70,20 @@ export const sendNotificationToAdmins = async (
     console.error("Admin Notification Error:", error);
   }
 };
+// Helper to notify a linked parent
+export const notifyParentOfStudent = async (
+  studentId: string,
+  title: string,
+  message: string,
+  type: 'task' | 'class' | 'announcement' | 'result' | 'general'
+) => {
+  const student = await UserModel.findById(studentId).select('parentId fullName');
+  if (student && student.parentId) {
+    await sendPushNotification(
+      student.parentId.toString(),
+      title,
+      message.replace("[StudentName]", student.fullName || "Your child"),
+      type
+    );
+  }
+};
