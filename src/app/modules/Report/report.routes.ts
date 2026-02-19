@@ -33,15 +33,22 @@ router.get(
   ReportControllers.getChildEnrolledCourses
 );
 
-// (View Progress - Image 1)
+
+
+
+
 router.get(
-  '/child-progress/:courseId/:childId',
-  auth(USER_ROLE.parent),
-  ReportControllers.getChildCourseProgress
+  '/view-progress/:courseId/:studentId',
+  auth('teacher', 'assistant', 'superAdmin'),
+  ReportControllers.getStudentProgressForInstructors
 );
 
-
-
+// parent (View Progress Page)
+router.get(
+  '/child-progress/:courseId/:childId',
+  auth('parent'),
+  ReportControllers.getChildCourseProgress
+);
 
 
 

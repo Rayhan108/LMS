@@ -2,6 +2,8 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { ReportServices } from "./report.services";
+import { UserModel } from "../User/user.model";
+import AppError from "../../errors/AppError";
 
 
 const getMyReport = catchAsync(async (req, res) => {
@@ -85,28 +87,46 @@ const getChildEnrolledCourses = catchAsync(async (req, res) => {
   });
 });
 
-// View Progress Page: Get specific course performance of a child
-const getChildCourseProgress = catchAsync(async (req, res) => {
-  const { courseId, childId } = req.params;
-  const parentId = req.user.userId;
 
-  const result = await ReportServices.getChildCourseProgressFromDB(
-    parentId,
-    childId as string,
-    courseId as string,
-  );
 
+
+// For Teachers and Assistants to view any student's progress
+const getStudentProgressForInstructors = catchAsync(async (req, res) => {
+  const { courseId, studentId } = req.params;
+  const result = await ReportServices.getDetailedStudentProgress(courseId as string, studentId as string );
+  
   sendResponse(res, {
-    statusCode: httpStatus.OK,
+    statusCode: 200,
     success: true,
-    message: "Child's course progress details retrieved successfully",
-    data: result,
+    message: 'Detailed student progress retrieved',
+    data: result
   });
+});
+
+// Updated Parent Controller (Uses the same detailed logic)
+const getChildCourseProgress = catchAsync(async (req, res) => {
+    const { courseId, childId } = req.params;
+    const parentId = req.user.userId;
+
+    // Security: Check if child belongs to this parent
+    const isAuthorized = await UserModel.findOne({ _id: childId, parentId: parentId });
+    if (!isAuthorized) {
+        throw new AppError(403, "Access Denied: You are not this student's parent.");
+    }
+
+    const result = await ReportServices.getDetailedStudentProgress(courseId as string, childId as string );
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Child progress details retrieved successfully",
+        data: result,
+    });
 });
 
 
 export const ReportControllers = {
   getMyReport,
   getCourseOverview,
-  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport,getChildCourseProgress,getChildEnrolledCourses
+  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport,getChildCourseProgress,getChildEnrolledCourses,getStudentProgressForInstructors
 };

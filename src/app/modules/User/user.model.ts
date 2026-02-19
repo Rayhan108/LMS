@@ -43,7 +43,11 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
   enum: ["student", "teacher", "assistant","parent","superAdmin"], 
  
 },
-
+  parentId: { 
+      type: Schema.Types.ObjectId, 
+      ref: 'User',
+      default: null 
+    },
     fcmToken: { type: String, required: true },
  
 

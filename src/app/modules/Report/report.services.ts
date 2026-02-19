@@ -370,6 +370,87 @@ const getChildEnrolledCoursesFromDB = async (parentId: string, childId: string) 
 };
 
 
+// Helper function to get missing tasks message for the current week
+const getMissingTasksMessage = async (courseId: string, studentId: string, studentName: string) => {
+    const now = new Date();
+    
+    // Get start and end of current week (Sunday to Saturday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    // Find all tasks in this course that ended/end this week
+    const tasksThisWeek = await TaskModel.find({
+        course: courseId,
+        endDate: { 
+            $gte: startOfWeek.toISOString().split('T')[0], 
+            $lte: endOfWeek.toISOString().split('T')[0] 
+        }
+    });
+
+    // Find submissions for these tasks by this student
+    const submittedTaskIds = (await SubmissionModel.find({
+        student: studentId,
+        task: { $in: tasksThisWeek.map(t => t._id) }
+    })).map(s => s.task.toString());
+
+    // Count tasks that are already past their deadline but not submitted
+    const missingCount = tasksThisWeek.filter(task => {
+        const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+        return now > endDateTime && !submittedTaskIds.includes(task._id.toString());
+    }).length;
+
+    if (missingCount > 0) {
+        return `${studentName} has ${missingCount} missing task${missingCount > 1 ? 's' : ''} this week`;
+    }
+    return null;
+};
+
+
+
+// Main Service for "View Progress" screen
+const getDetailedStudentProgress = async (courseId: string, studentId: string) => {
+    // 1. Fetch Student and Populate Parent
+    const student = await UserModel.findById(studentId)
+        .populate({
+            path: 'parentId',
+            select: 'fullName image contact email'
+        })
+        .select('fullName image contact role parentId')
+        .lean();
+
+    if (!student) throw new Error("Student not found");
+
+    // 2. Fetch Course and Populate Instructors
+    const course = await CourseModel.findById(courseId)
+        .populate({ path: 'teacherId', select: 'fullName image contact' })
+        .populate({ path: 'assistantId', select: 'fullName image contact' })
+        .lean();
+
+    // 3. Get Academic Stats (The 4 Boxes)
+    const progressStats = await syncAndGetStudentProgress(courseId, studentId);
+
+    // 4. Get Dynamic Missing Task Message
+    const missingTaskMessage = await getMissingTasksMessage(courseId, studentId, student.fullName || 'Student');
+
+    return {
+        studentInfo: student,
+        parentInfo: student.parentId || null,
+        instructors: {
+            teacher: course?.teacherId || null,
+            assistant: course?.assistantId || null
+        },
+        academicStats: progressStats,
+        alertMessage: missingTaskMessage
+    };
+};
+
+
+
 const getChildCourseProgressFromDB = async (parentId: string, childId: string, courseId: string) => {
   // 1. Verify Parent-Child Relationship
   const isAuthorized = await UserModel.findOne({ _id: childId, parentId: parentId });
@@ -402,5 +483,5 @@ export const ReportServices = {
   getCourseDashboardOverview,
   getStudentListWithStatus,
   getOverallCourseAcademicStats,
-  getDetailedTabularReport,getChildEnrolledCoursesFromDB,getChildCourseProgressFromDB
+  getDetailedTabularReport,getChildEnrolledCoursesFromDB,getChildCourseProgressFromDB,getDetailedStudentProgress
 };
