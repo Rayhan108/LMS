@@ -28,12 +28,17 @@ const createTask = catchAsync(async (req, res) => {
 
 const getTasksByCourse = catchAsync(async (req, res) => {
   const { courseId } = req.params;
+  const { userId, role } = req.user; // Get from Auth Token
   
-  // Pass req.query to service for QueryBuilder
-  const result = await TaskServices.getTasksByCourseFromDB(courseId as string, req.query);
+  const result = await TaskServices.getTasksByCourseFromDB(
+    courseId as string, 
+    req.query, // contains possible studentId for parents
+    userId,
+    role
+  );
 
   sendResponse(res, {
-    statusCode: httpStatus.OK,
+    statusCode: 200,
     success: true,
     message: 'Tasks retrieved successfully',
     data: result

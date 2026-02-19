@@ -32,37 +32,79 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
 };
 
 
-const getTasksByCourseFromDB = async (courseId: string, query: Record<string, unknown>) => {
-  // 1. Create a copy of the query
-  const queryObj = { ...query };
-
-  // 2. Remove 'status' from queryObj because it's a virtual field and QueryBuilder will fail to find it in DB
-  const statusFilter = queryObj.status;
-  delete queryObj.status;
-
-  // 3. Initialize QueryBuilder
+const getTasksByCourseFromDB = async (
+  courseId: string, 
+  query: Record<string, unknown>,
+  userId: string,
+  role: string
+) => {
+  // 1. Initialize QueryBuilder to fetch tasks
   const taskQuery = new QueryBuilder(
-    TaskModel.find({ course: courseId }),
-    queryObj
+    TaskModel.find({ course: courseId }).populate({
+      path: 'createdBy',
+      select: 'fullName image'
+    }),
+    query
   )
-    .search(['title']) // Title 
-    .filter()         // 'type' (homework/exam)
+    .search(['title'])
+    .filter()
     .sort()
     .paginate()
     .fields();
 
-  // 4. Execute the query
-  let result = await taskQuery.modelQuery;
+  const tasks = await taskQuery.modelQuery;
+  const meta = await taskQuery.countTotal();
 
-  // 5. Manually filter by virtual 'status' (active / time over) if provided in query
-  if (statusFilter) {
-    result = result.filter((task: any) => task.status === statusFilter);
+  // 2. Logic for Student or Parent to see userStatus
+  if (role === 'student' || role === 'parent') {
+    
+    let targetStudentId = userId;
+
+    // If it's a parent, they must provide the studentId (child's ID) in query
+    if (role === 'parent') {
+      if (!query.studentId) {
+        return { meta, result: tasks }; // Return tasks without status if no studentId provided
+      }
+      targetStudentId = query.studentId as string;
+    }
+
+    // Fetch all submissions of the target student for this course
+    const studentSubmissions = await SubmissionModel.find({ 
+      student: targetStudentId, 
+      course: courseId 
+    }).select('task');
+
+    const submittedTaskIds = studentSubmissions.map(s => s.task.toString());
+
+    // Map through tasks and inject the userStatus field
+    const resultWithStatus = tasks.map((task: any) => {
+      const taskObj = task.toObject();
+      const now = new Date();
+      
+      // Handle potential space or formatting issues in AM/PM time
+      const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+
+      let userStatus = "Due Soon"; // Default status
+
+      if (submittedTaskIds.includes(task._id.toString())) {
+        userStatus = "Done";
+      } else if (now > endDateTime) {
+        userStatus = "Missing";
+      }
+
+      return {
+        ...taskObj,
+        userStatus // Injected status for UI
+      };
+    });
+
+    return { meta, result: resultWithStatus };
   }
 
-  const meta = await taskQuery.countTotal();
-  
-  return { meta, result };
+  // 3. For Teachers/Assistants, return normal results without userStatus
+  return { meta, result: tasks };
 };
+
 
 
 
