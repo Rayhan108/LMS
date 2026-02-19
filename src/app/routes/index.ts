@@ -14,6 +14,7 @@ import { AttendanceRoutes } from "../modules/Attendence/attendence.routes";
 import { ReportRoutes } from "../modules/Report/report.routes";
 import { NotificationRoutes } from "../modules/Notification/notification.routes";
 import { AnnouncementRoutes } from "../modules/Announcement/announcement.routes";
+import { AdminRoutes } from "../modules/Admin/admin.routes";
 
 const router = Router();
 
@@ -77,6 +78,10 @@ const moduleRoutes = [
   {
     path: '/announcements',
     route: AnnouncementRoutes
+  },
+  {
+    path: '/dashboard',
+    route: AdminRoutes
   },
 ];
 
