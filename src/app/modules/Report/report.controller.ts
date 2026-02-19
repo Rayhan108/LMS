@@ -125,8 +125,77 @@ const getChildCourseProgress = catchAsync(async (req, res) => {
 });
 
 
+
+
+
+// Instructor View: Get a specific student's marks history (Image 1)
+const getStudentMarksHistory = catchAsync(async (req, res) => {
+  const { courseId, studentId } = req.params;
+  const result = await ReportServices.getStudentMarksHistoryFromDB(courseId as string, studentId as string);
+  
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Student marks history retrieved successfully",
+    data: result,
+  });
+});
+
+// Instructor View: Get a specific student's attendance history (Image 2)
+const getStudentAttendanceHistory = catchAsync(async (req, res) => {
+  const { courseId, studentId } = req.params;
+  const result = await ReportServices.getStudentDetailedAttendanceFromDB(courseId as string, studentId as string);
+  
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Student attendance history retrieved successfully",
+    data: result,
+  });
+});
+
+// Student View: Get own marks history
+const getMyMarksHistory = catchAsync(async (req, res) => {
+  const { courseId } = req.params;
+  const studentId = req.user.userId; // Logged in student ID from token
+
+  const result = await ReportServices.getStudentMarksHistoryFromDB(courseId as string, studentId as string);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Your marks history retrieved successfully",
+    data: result,
+  });
+});
+
+// Student View: Get own attendance history
+const getMyAttendanceHistory = catchAsync(async (req, res) => {
+  const { courseId } = req.params;
+  const studentId = req.user.userId;
+
+  const result = await ReportServices.getStudentDetailedAttendanceFromDB(courseId as string, studentId as string);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Your attendance history retrieved successfully",
+    data: result,
+  });
+});
+
+
+
+
+
+
+
 export const ReportControllers = {
   getMyReport,
   getCourseOverview,
-  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport,getChildCourseProgress,getChildEnrolledCourses,getStudentProgressForInstructors
+  getCourseStudentsStatus,getOverallAcademicStats,getTabularReport,getChildCourseProgress,getChildEnrolledCourses,getStudentProgressForInstructors,  
+    getStudentMarksHistory,
+  getStudentAttendanceHistory,
+  getMyMarksHistory,
+  getMyAttendanceHistory
 };

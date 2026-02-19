@@ -7,6 +7,7 @@ import { AttendanceModel } from "../Attendence/attendence.model";
 import { CourseModel } from "../Course/course.model";
 import { UserModel } from "../User/user.model";
 import AppError from "../../errors/AppError";
+import { ClassModel } from "../Class/class.model";
 
 const syncAndGetStudentProgress = async (
   courseId: string,
@@ -475,6 +476,88 @@ const getChildCourseProgressFromDB = async (parentId: string, childId: string, c
   };
 };
 
+// Service to get academic history (Image 1: View All Marks)
+const getStudentMarksHistoryFromDB = async (courseId: string, studentId: string) => {
+  // 1. Get all tasks for this course
+  const allTasks = await TaskModel.find({ course: courseId })
+    .populate({ path: 'createdBy', select: 'fullName image' })
+    .sort({ createdAt: -1 }).lean();
+
+  // 2. Get student submissions for these tasks
+  const submissions = await SubmissionModel.find({ course: courseId, student: studentId }).lean();
+
+  // 3. Merge data to create the UI format
+  const marksHistory = allTasks.map(task => {
+    const submission = submissions.find(s => s.task.toString() === task._id.toString());
+    const now = new Date();
+    const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+
+    let uiStatus = "Not Submitted";
+    if (submission) {
+      uiStatus = submission.submissionStatus === 'in time' ? "Submitted on time" : "Late submitted";
+    } else if (now > endDateTime) {
+      uiStatus = "Missing";
+    }
+
+    return {
+      taskId: task._id,
+      title: task.title,
+      type: task.type,
+      deadline: `${task.endDate} ${task.endTime}`,
+      status: uiStatus,
+      isMarked: submission?.isMarked || false,
+      marks: submission?.marks || 0,
+      feedback: submission?.feedback || null,
+      correctAnswerPdf: submission?.correctAnswerPdf || null,
+      answerPdf: submission?.answerPdf || null,
+      teacher: task.createdBy,
+      postedAt: task.createdAt
+    };
+  });
+
+  return marksHistory;
+};
+
+// Service to get detailed attendance history (Image 2: View Attendance)
+const getStudentDetailedAttendanceFromDB = async (courseId: string, studentId: string) => {
+  // 1. Fetch all classes for this course
+  const classes = await ClassModel.find({ course: courseId }).sort({ date: 1 });
+  
+  // 2. Fetch student's attendance records
+  const attendances = await AttendanceModel.find({ course: courseId, student: studentId });
+
+  // 3. Map attendance to each class
+  const classWiseAttendance = classes.map(cls => {
+    // Format the date to match attendance date string YYYY-MM-DD
+    const classDate = cls.date.toISOString().split('T')[0];
+    const record = attendances.find(a => a.date === classDate);
+
+    return {
+      className: cls.title,
+      classStart: `${classDate} | ${cls.time}`,
+      status: record ? record.status : "Not Marked"
+    };
+  });
+
+  // 4. Calculate Stats for the top of the screen
+  const totalClasses = classes.length;
+  const onTime = attendances.filter(a => a.status === 'on time').length;
+  const late = attendances.filter(a => a.status === 'late').length;
+  const absent = attendances.filter(a => a.status === 'absent').length;
+
+  const getPercent = (val: number) => totalClasses > 0 ? Math.round((val / totalClasses) * 100) : 0;
+
+  return {
+    totalCompletedClass: totalClasses,
+    stats: {
+      onTime: { count: onTime, percentage: getPercent(onTime) },
+      late: { count: late, percentage: getPercent(late) },
+      absent: { count: absent, percentage: getPercent(absent) }
+    },
+    attendanceList: classWiseAttendance
+  };
+};
+
 
 
 
@@ -483,5 +566,6 @@ export const ReportServices = {
   getCourseDashboardOverview,
   getStudentListWithStatus,
   getOverallCourseAcademicStats,
-  getDetailedTabularReport,getChildEnrolledCoursesFromDB,getChildCourseProgressFromDB,getDetailedStudentProgress
+  getDetailedTabularReport,getChildEnrolledCoursesFromDB,getChildCourseProgressFromDB,getDetailedStudentProgress,  getStudentMarksHistoryFromDB,
+  getStudentDetailedAttendanceFromDB
 };

@@ -14,4 +14,6 @@ export interface ITask {
   document?: string;
   createdBy: Types.ObjectId;
    status?: 'active' | 'time over';
+     createdAt?: Date; 
+  updatedAt?: Date;
 }

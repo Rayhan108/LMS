@@ -54,4 +54,42 @@ router.get(
 
 
 
+
+
+// --- Student Self-Service Routes ---
+router.get(
+  '/my-marks-history/:courseId', 
+  auth(USER_ROLE.student), 
+  ReportControllers.getMyMarksHistory
+);
+
+router.get(
+  '/my-attendance-history/:courseId', 
+  auth(USER_ROLE.student), 
+  ReportControllers.getMyAttendanceHistory
+);
+
+
+// --- Instructor/Admin View Routes ---
+
+
+router.get(
+  '/student-marks/:courseId/:studentId',
+  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin),
+  ReportControllers.getStudentMarksHistory
+);
+
+
+router.get(
+  '/student-attendance/:courseId/:studentId',
+  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin),
+  ReportControllers.getStudentAttendanceHistory
+);
+
+
+
+
+
+
+
 export const ReportRoutes = router;
