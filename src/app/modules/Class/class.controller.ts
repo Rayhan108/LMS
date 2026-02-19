@@ -5,9 +5,28 @@ import { ClassServices } from "./class.services";
 import httpStatus from 'http-status';
 
 const createClass = catchAsync(async (req, res) => {
-  const document = req.file ? await uploadImage(req) : undefined;
-  const result = await ClassServices.createClassIntoDB({ ...req.body, document, createdBy: req.user.userId });
-  sendResponse(res, { statusCode: 201, success: true, message: 'Class added', data: result });
+  let documents: string[] = [];
+
+  // Check if multiple files are uploaded
+  if (req.files && Array.isArray(req.files)) {
+    const uploadPromises = (req.files as Express.Multer.File[]).map((file) =>
+      uploadImage(req, file) // Reusing your existing uploadImage utility
+    );
+    documents = await Promise.all(uploadPromises);
+  }
+
+  const result = await ClassServices.createClassIntoDB({ 
+    ...req.body, 
+    documents, // Saving the array of URLs
+    createdBy: req.user.userId 
+  });
+
+  sendResponse(res, { 
+    statusCode: 201, 
+    success: true, 
+    message: 'Class added with multiple documents', 
+    data: result 
+  });
 });
 const getClassesByCourse = catchAsync(async (req, res) => {
 

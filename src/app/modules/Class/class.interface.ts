@@ -6,7 +6,7 @@ export interface IClass {
   date: Date;
   time: string;
   details: string;
-  document?: string;
+ documents?: string[];
   link: string;
   createdBy: Types.ObjectId;
 }

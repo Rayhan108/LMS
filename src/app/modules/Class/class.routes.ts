@@ -8,6 +8,6 @@ const parseBody = (req: Request, res: Response, next: NextFunction) => {
   if (req.body.body) req.body = JSON.parse(req.body.body);
   next();
 };
-router.post('/add', auth('teacher', 'assistant'), upload.single('document'), parseBody, ClassController.createClass);
+router.post('/add', auth('teacher', 'assistant'),  upload.array('documents', 10), parseBody, ClassController.createClass);
 router.get('/:courseId', auth('teacher', 'assistant', 'student'), ClassController.getClassesByCourse);
 export const ClassRoutes=router

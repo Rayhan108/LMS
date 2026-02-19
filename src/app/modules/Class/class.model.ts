@@ -9,7 +9,7 @@ const classSchema = new Schema<IClass>({
   date: { type: Date, required: true },
   time: { type: String, required: true },
   details: { type: String, required: true },
-  document: { type: String },
+ documents: [{ type: String }],
   link: { type: String, required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
