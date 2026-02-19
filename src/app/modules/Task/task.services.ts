@@ -1,5 +1,6 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendNotificationToCourse } from "../../utils/sendNotification";
+import { SubmissionModel } from "../Submission/submission.model";
 import { ITask } from "./task.interface";
 import { TaskModel } from "./task.model";
 
@@ -44,8 +45,8 @@ const getTasksByCourseFromDB = async (courseId: string, query: Record<string, un
     TaskModel.find({ course: courseId }),
     queryObj
   )
-    .search(['title']) // Title দিয়ে সার্চ করা যাবে
-    .filter()         // 'type' (homework/exam) ফিল্টার এখানে অটোমেটিক হবে
+    .search(['title']) // Title 
+    .filter()         // 'type' (homework/exam)
     .sort()
     .paginate()
     .fields();
@@ -63,8 +64,63 @@ const getTasksByCourseFromDB = async (courseId: string, query: Record<string, un
   return { meta, result };
 };
 
+
+
+
+// Fetch single task details with conditional submission info
+const getSingleTaskWithUserStatus = async (taskId: string, userId: string, role: string) => {
+  // 1. Fetch the task with teacher details
+  const task = await TaskModel.findById(taskId).populate({
+    path: 'createdBy',
+    select: 'fullName image'
+  }).lean();
+
+  if (!task) return null;
+
+  // 2. If the user is NOT a student, return the task without submissionInfo
+  if (role !== 'student') {
+    return task;
+  }
+
+  // 3. Logic for students only: determine submission status
+  let submissionStatus = "pending"; 
+  let isSubmitted = false;
+
+  const submission = await SubmissionModel.findOne({ task: taskId, student: userId });
+  
+  if (submission) {
+    isSubmitted = true;
+    submissionStatus = "submitted";
+  } else {
+    const now = new Date();
+    const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+    
+    // If deadline passed and not submitted, mark as "missing"
+    if (now > endDateTime) {
+      submissionStatus = "missing";
+    }
+  }
+
+  // 4. Return task with submissionInfo only for students
+  return {
+    ...task,
+    submissionInfo: {
+      isSubmitted,
+      status: submissionStatus
+    }
+  };
+};
+
+
+
+
+
+
+
+
+
 export const TaskServices = {
   createTaskIntoDB,
   getAllTasksFromDB,
-  getTasksByCourseFromDB
+  getTasksByCourseFromDB,getSingleTaskWithUserStatus
 };

@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import uploadImage from "../../middleware/upload";
 import { TaskServices } from "./task.services";
+import AppError from "../../errors/AppError";
 
 
 const createTask = catchAsync(async (req, res) => {
@@ -39,7 +40,31 @@ const getTasksByCourse = catchAsync(async (req, res) => {
   });
 });
 
+
+const getSingleTaskDetail = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { userId, role } = req.user; // Token logic
+
+  const result = await TaskServices.getSingleTaskWithUserStatus(id as string, userId, role);
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, "Task not found");
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Task details retrieved successfully',
+    data: result
+  });
+});
+
+
+
+
+
+
 export const TaskControllers = {
   createTask,
-  getTasksByCourse
+  getTasksByCourse,getSingleTaskDetail
 };

@@ -27,4 +27,11 @@ router.get(
   TaskControllers.getTasksByCourse
 );
 
+router.get(
+  '/details/:id',
+  auth('teacher', 'assistant', 'student'),
+  TaskControllers.getSingleTaskDetail
+);
+
+
 export const TaskRoutes = router;
