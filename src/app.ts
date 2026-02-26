@@ -27,6 +27,7 @@ app.use(
       'https://el-afrik.vercel.app',
       'http://15.223.245.199',
       'http://15.223.245.199:3000',
+      'https://dr-dina-dashboard.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
