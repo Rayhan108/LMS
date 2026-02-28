@@ -11,6 +11,11 @@ router.get(
   auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
   NotificationController.getMyNotifications
 );
+router.get(
+  '/admin-notifications',
+  auth(USER_ROLE.superAdmin),
+  NotificationController.getMyNotifications
+);
 
 
 router.patch(

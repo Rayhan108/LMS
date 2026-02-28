@@ -13,7 +13,7 @@ export const sendPushNotification = async (
   try {
     // 1. Save to Database for in-app notification list
     await NotificationModel.create({
-      receiver: receiverId,
+     user: receiverId,
       title,
       message,
       type
