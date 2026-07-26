@@ -79,23 +79,34 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
     console.log("👤 Participant Details:", participant);
     
     const studentEmail = participant.email || participant.user_email;
+    const studentName = participant.user_name;
     const joinTime = new Date(participant.join_time);
     
-    console.log(`📧 Looking for student with email: ${studentEmail}`);
+    console.log(`📧 Looking for student with email: ${studentEmail || 'undefined'} or name: ${studentName}`);
     console.log(`🆔 Zoom Meeting ID: ${meetingId}`);
 
-    if (!studentEmail) {
-      console.log("❌ CRITICAL: Zoom did not send user_email. Cannot mark attendance.");
-    } else {
-      const [targetClass, student] = await Promise.all([
-        ClassModel.findOne({ zoomMeetingId: meetingId }),
-        UserModel.findOne({ email: studentEmail, role: "student" }),
-      ]);
+    let student = null;
+    const targetClass = await ClassModel.findOne({ zoomMeetingId: meetingId });
 
-      if (!targetClass) console.log("❌ DB_ERROR: No class found matching this Zoom Meeting ID.");
-      if (!student) console.log(`❌ DB_ERROR: No student found with email ${studentEmail}.`);
+    if (studentEmail) {
+      student = await UserModel.findOne({ email: studentEmail, role: "student" });
+    } else if (studentName) {
+      console.log("⚠️ Email not provided by Zoom. Falling back to Name matching...");
+      // Try exact match first
+      student = await UserModel.findOne({ fullName: studentName, role: "student" });
+      if (!student) {
+        // Try case-insensitive regex match
+        student = await UserModel.findOne({ 
+          fullName: { $regex: new RegExp(`^${studentName}$`, 'i') }, 
+          role: "student" 
+        });
+      }
+    }
 
-      if (targetClass && student) {
+    if (!targetClass) console.log("❌ DB_ERROR: No class found matching this Zoom Meeting ID.");
+    if (!student) console.log(`❌ DB_ERROR: No student found with email ${studentEmail} or name ${studentName}.`);
+
+    if (targetClass && student) {
         console.log("✅ SUCCESS: Found Class and Student in DB. Proceeding to mark attendance...");
         const classDateStr = targetClass.date.toISOString().split("T")[0];
         const scheduledStartTime = new Date(`${classDateStr} ${targetClass.time}`);
