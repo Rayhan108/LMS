@@ -67,9 +67,9 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
         host_video: true,
         participant_video: true,
         mute_upon_entry: true,
-        auto_recording: 'cloud', // Changed to local. 'cloud' causes 400 error for Basic (free) Zoom accounts
-        // meeting_authentication: true, // Often causes 400 error
-        approval_type: 0,       // Registration features often cause 400 error
+        auto_recording: 'cloud', 
+  
+        approval_type: 0,       
         registration_type: 1,   
         enforce_login: false
       }
@@ -77,9 +77,10 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
       headers: { Authorization: `Bearer ${token}` }
     });
     return {
-      join_url: response.data.join_url,
+      join_url: response.data.registration_url || response.data.join_url,
       start_url: response.data.start_url, 
-      id: response.data.id
+      id: response.data.id,
+      registration_url: response.data.registration_url
     };
   } catch (error: any) {
     if (error.response && error.response.data) {
