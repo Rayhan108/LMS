@@ -85,7 +85,7 @@ const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
     }
 
     const formattedHours = hours.toString().padStart(2, '0');
-    const formattedStartTime = `${datePart}T${formattedHours}:${minutes}:00Z`;
+    const formattedStartTime = `${datePart}T${formattedHours}:${minutes}:00`;
 
     const zoomData = await ZoomServices.createZoomMeeting(
       userId, 
