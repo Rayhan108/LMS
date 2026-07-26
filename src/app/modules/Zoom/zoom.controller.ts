@@ -139,7 +139,6 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
         );
         console.log("🎉 Attendance successfully saved to database!");
       }
-    }
     console.log("=========================================");
   }
 
