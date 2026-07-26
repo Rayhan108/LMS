@@ -73,70 +73,92 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   const meetingId = payload.object.id?.toString();
 
   if (event === "meeting.participant_joined" && meetingId) {
+    console.log("=========================================");
+    console.log("🟢 EVENT: A Participant JOINED the meeting!");
     const participant = payload.object.participant;
-     console.log("📧 Participants:", participant);
+    console.log("👤 Participant Details:", participant);
+    
     const studentEmail = participant.email || participant.user_email;
     const joinTime = new Date(participant.join_time);
- console.log("📧 LOOKING_FOR_STUDENT_EMAIL:", studentEmail);
-    console.log("🆔 MEETING_ID_FROM_ZOOM:", meetingId);
-      if (!studentEmail) {
-      console.log("❌ CRITICAL: Zoom did not send user_email. Attendance cannot be marked!");
-    }
-    const [targetClass, student] = await Promise.all([
-      ClassModel.findOne({ zoomMeetingId: meetingId }),
-      UserModel.findOne({ email: studentEmail, role: "student" }),
-    ]);
-    if (!targetClass) console.log("❌ DB_ERROR: Class not found for ID:", meetingId);
-    if (!student) console.log("❌ DB_ERROR: Student not found with email:", studentEmail);
-    if (targetClass && student) {
-       console.log("✅ SUCCESS: Found Class and Student. Marking Attendance now...");
-      const classDateStr = targetClass.date.toISOString().split("T")[0];
-      const scheduledStartTime = new Date(
-        `${classDateStr} ${targetClass.time}`,
-      );
-      const bufferThreshold = new Date(
-        scheduledStartTime.getTime() + 15 * 60000,
-      );
+    
+    console.log(`📧 Looking for student with email: ${studentEmail}`);
+    console.log(`🆔 Zoom Meeting ID: ${meetingId}`);
 
-      let attendanceStatus: "on time" | "late" = "on time";
-      if (joinTime > bufferThreshold) {
-        attendanceStatus = "late";
+    if (!studentEmail) {
+      console.log("❌ CRITICAL: Zoom did not send user_email. Cannot mark attendance.");
+    } else {
+      const [targetClass, student] = await Promise.all([
+        ClassModel.findOne({ zoomMeetingId: meetingId }),
+        UserModel.findOne({ email: studentEmail, role: "student" }),
+      ]);
+
+      if (!targetClass) console.log("❌ DB_ERROR: No class found matching this Zoom Meeting ID.");
+      if (!student) console.log(`❌ DB_ERROR: No student found with email ${studentEmail}.`);
+
+      if (targetClass && student) {
+        console.log("✅ SUCCESS: Found Class and Student in DB. Proceeding to mark attendance...");
+        const classDateStr = targetClass.date.toISOString().split("T")[0];
+        const scheduledStartTime = new Date(`${classDateStr} ${targetClass.time}`);
+        const bufferThreshold = new Date(scheduledStartTime.getTime() + 15 * 60000);
+
+        let attendanceStatus: "on time" | "late" = "on time";
+        if (joinTime > bufferThreshold) {
+          attendanceStatus = "late";
+        }
+        
+        console.log(`🕒 Scheduled Time: ${scheduledStartTime.toLocaleTimeString()}, Join Time: ${joinTime.toLocaleTimeString()}`);
+        console.log(`📌 Marking Attendance Status as: ${attendanceStatus.toUpperCase()}`);
+
+        await AttendanceModel.findOneAndUpdate(
+          { class: targetClass._id, student: student._id },
+          {
+            class: targetClass._id,
+            course: targetClass.course,
+            student: student._id,
+            status: attendanceStatus,
+            date: classDateStr,
+            time: joinTime.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            markedBy: targetClass.createdBy,
+          },
+          { upsert: true, new: true },
+        );
+        console.log("🎉 Attendance successfully saved to database!");
       }
-
-      await AttendanceModel.findOneAndUpdate(
-        { class: targetClass._id, student: student._id },
-        {
-          class: targetClass._id,
-          course: targetClass.course,
-          student: student._id,
-          status: attendanceStatus,
-          date: classDateStr,
-          time: joinTime.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }),
-          markedBy: targetClass.createdBy,
-        },
-        { upsert: true, new: true },
-      );
     }
+    console.log("=========================================");
+  }
+
+  if (event === "meeting.participant_left" && meetingId) {
+    console.log("=========================================");
+    console.log("🔴 EVENT: A Participant LEFT the meeting!");
+    const participant = payload.object.participant;
+    console.log(`👤 Name: ${participant.user_name || "Unknown"}`);
+    console.log(`📧 Email: ${participant.email || participant.user_email || "Unknown"}`);
+    console.log(`🕒 Leave Time: ${new Date(participant.leave_time).toLocaleTimeString()}`);
+    console.log("=========================================");
   }
 
   if (meetingId) {
     if (event === "meeting.started") {
+      console.log(`🚀 Meeting STARTED (ID: ${meetingId})`);
       await ClassModel.findOneAndUpdate(
         { zoomMeetingId: meetingId },
         { zoomStatus: "started" },
       );
     }
     if (event === "meeting.ended") {
+      console.log(`🛑 Meeting ENDED (ID: ${meetingId})`);
       await ClassModel.findOneAndUpdate(
         { zoomMeetingId: meetingId },
         { zoomStatus: "ended" },
       );
     }
     if (event === "recording.completed") {
+      console.log(`🎥 Recording COMPLETED (ID: ${meetingId})`);
       const playUrl = payload.object.share_url;
       await ClassModel.findOneAndUpdate(
         { zoomMeetingId: meetingId },
