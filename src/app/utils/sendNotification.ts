@@ -111,7 +111,11 @@ if (!admin.apps.length) {
   try {
     const configString = process.env.FIREBASE_CONFIG;
     if (configString) {
-      const serviceAccount = JSON.parse(configString);
+      let cleanConfigString = configString.trim();
+      if (cleanConfigString.startsWith("'") && cleanConfigString.endsWith("'")) {
+        cleanConfigString = cleanConfigString.slice(1, -1);
+      }
+      const serviceAccount = JSON.parse(cleanConfigString);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });

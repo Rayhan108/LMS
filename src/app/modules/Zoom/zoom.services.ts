@@ -55,35 +55,39 @@ const getValidAccessToken = async (userId: string) => {
 const createZoomMeeting = async (userId: string, classTitle: string, startTime: string) => {
   
   const token = await getValidAccessToken(userId);
-  const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', {
-    topic: classTitle,
-    type: 2,
-    start_time: startTime,
-    duration: 60,
-    settings: {
-   
-      join_before_host: false, 
-  waiting_room: true,      
-  host_video: true,
-  participant_video: true,
-  mute_upon_entry: true,
-  // auto_recording: 'cloud',
-  auto_recording: 'none',
-  meeting_authentication: true,
-  //attendence without zoom pro account 
-   approval_type: 0,       
-    registration_type: 1,  
-    enforce_login: false ,
-  //  authentication_option: 'sign_in_with_zoom'
+  try {
+    const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', {
+      topic: classTitle,
+      type: 2,
+      start_time: startTime,
+      duration: 60,
+      settings: {
+        join_before_host: false, 
+        waiting_room: true,      
+        host_video: true,
+        participant_video: true,
+        mute_upon_entry: true,
+        auto_recording: 'local', // Changed to local. 'cloud' causes 400 error for Basic (free) Zoom accounts
+        // meeting_authentication: true, // Often causes 400 error
+        // approval_type: 0,       // Registration features often cause 400 error
+        // registration_type: 1,   
+        // enforce_login: false
+      }
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return {
+      join_url: response.data.join_url,
+      start_url: response.data.start_url, 
+      id: response.data.id
+    };
+  } catch (error: any) {
+    if (error.response && error.response.data) {
+      console.error("Zoom API Error:", JSON.stringify(error.response.data, null, 2));
+      throw new AppError(error.response.status, `Zoom API Error: ${error.response.data.message || JSON.stringify(error.response.data)}`);
     }
-  }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return {
-    join_url: response.data.join_url,
-    start_url: response.data.start_url, 
-    id: response.data.id
-  };
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create Zoom meeting");
+  }
 };
 
 export const ZoomServices = { exchangeCodeForToken, getValidAccessToken, createZoomMeeting };

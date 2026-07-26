@@ -50,74 +50,42 @@ import  httpStatus  from "http-status";
 //   }
 
 //   return result;
-// };
+// }; 
 
 
-// const getClassesByCourse = async (courseId: string, query: Record<string, unknown>) => {
-
-//   const classQuery = new QueryBuilder(
-//     ClassModel.find({ course: courseId }), 
-//     query
-//   )
-//     .search(['title', 'details']) 
-//     .filter()
-//     .sort() 
-//     .paginate()
-//     .fields();
-
- 
-//   classQuery.modelQuery.populate([
-//     { 
-//       path: 'createdBy', 
-//       select: 'fullName image' 
-//     },
-//     {
-//       path: 'comments',
-//       match: { parentCommentId: null }, 
-//       populate: [
-//         { path: 'user', select: 'fullName image role' },
-//         {
-//           path: 'replies', 
-//           populate: { path: 'user', select: 'fullName image role' }
-//         }
-//       ]
-//     }
-//   ]);
-
-
-//   const result = await classQuery.modelQuery;
-//   const meta = await classQuery.countTotal();
-
-//   return { meta, result };
-// };
 
 const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
 
   if ((payload as any).isZoomMeeting) {
 
-    const rawDate = payload.date; 
-    const rawTime = (payload as any).time; 
+    const rawDate = payload.date as any; 
+    const rawTime = (payload as any).time as string; 
 
     if (!rawDate || !rawTime) {
       throw new AppError(httpStatus.BAD_REQUEST, "Date and Time are required for Zoom meeting");
     } 
 
+    const rawDateStr = rawDate instanceof Date ? rawDate.toISOString() : String(rawDate);
+    const datePart = rawDateStr.includes('T') ? rawDateStr.split('T')[0] : rawDateStr;
 
-    const [time, modifier] = rawTime.split(' ');
-    let [hours, minutes] = time.split(':');
+    // Robust time parsing
+    const timeMatch = rawTime.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/i);
+    if (!timeMatch) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid time format. Example: 10:30 AM");
+    }
     
-    if (hours === '12') {
-      hours = '00';
-    }
-    if (modifier === 'PM') {
-      hours = (parseInt(hours, 10) + 12).toString();
-    }
-    if (hours.length === 1) {
-      hours = `0${hours}`;
+    let hours = parseInt(timeMatch[1], 10);
+    const minutes = timeMatch[2];
+    const modifier = timeMatch[3]?.toUpperCase();
+
+    if (modifier === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (modifier === 'AM' && hours === 12) {
+      hours = 0;
     }
 
-
-    const formattedStartTime = `${rawDate}T${hours}:${minutes}:00`;
+    const formattedHours = hours.toString().padStart(2, '0');
+    const formattedStartTime = `${datePart}T${formattedHours}:${minutes}:00Z`;
 
     const zoomData = await ZoomServices.createZoomMeeting(
       userId, 
@@ -152,6 +120,12 @@ const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
 
   return result;
 };
+
+
+
+
+
+
 const getClassesByCourse = async (
   courseId: string, 
   query: Record<string, unknown>,
