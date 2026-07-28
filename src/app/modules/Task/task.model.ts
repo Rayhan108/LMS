@@ -11,7 +11,8 @@ const taskSchema = new Schema<ITask>({
   endTime: { type: String, required: true },
   details: { type: String, required: true },
  documents: [{ type: String }],
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  deadlineNotified: { type: Boolean, default: false }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },

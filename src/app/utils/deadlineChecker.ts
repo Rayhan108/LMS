@@ -16,8 +16,8 @@ const checkOverdueTasks = async () => {
   try {
     const now = new Date();
 
-    // Get all tasks
-    const tasks = await TaskModel.find({});
+    // Get all tasks that haven't been notified yet
+    const tasks = await TaskModel.find({ deadlineNotified: { $ne: true } });
 
     for (const task of tasks) {
       // Build deadline Date from task's string fields (YYYY-MM-DD + HH:mm)
@@ -42,7 +42,10 @@ const checkOverdueTasks = async () => {
       );
 
       // Nothing to notify if everyone submitted
-      if (missingStudents.length === 0) continue;
+      if (missingStudents.length === 0) {
+        await TaskModel.findByIdAndUpdate(task._id, { deadlineNotified: true });
+        continue;
+      }
 
       const taskTypeLabel = task.type === 'exam' ? 'Exam' : 'Homework';
       const title = `⚠️ ${taskTypeLabel} Deadline Passed`;
@@ -96,6 +99,9 @@ const checkOverdueTasks = async () => {
       console.log(
         `⏰ [DeadlineChecker] Notified about "${task.title}" — ${missingStudents.length} missing submission(s)`
       );
+
+      // Mark the task as notified so we don't spam notifications
+      await TaskModel.findByIdAndUpdate(task._id, { deadlineNotified: true });
     }
   } catch (error) {
     console.error('❌ [DeadlineChecker] Error:', error);

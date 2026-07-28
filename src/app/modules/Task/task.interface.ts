@@ -12,7 +12,8 @@ export interface ITask {
   endTime: string;   // HH:mm
   details: string;
 documents?: string[];
-  createdBy: Types.ObjectId;
+   createdBy: Types.ObjectId;
+   deadlineNotified?: boolean;
    status?: 'active' | 'time over';
      createdAt?: Date; 
   updatedAt?: Date;
