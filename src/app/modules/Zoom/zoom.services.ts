@@ -36,19 +36,27 @@ const getValidAccessToken = async (userId: string) => {
     return user.zoomAccessToken;
   }
 
-  const auth = Buffer.from(`${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`).toString('base64');
-  const response = await axios.post(ZOOM_OAUTH_ENDPOINT, null, {
-    params: { grant_type: 'refresh_token', refresh_token: user.zoomRefreshToken },
-    headers: { Authorization: `Basic ${auth}` },
-  });
+  try {
+    const auth = Buffer.from(`${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`).toString('base64');
+    const response = await axios.post(ZOOM_OAUTH_ENDPOINT, null, {
+      params: { grant_type: 'refresh_token', refresh_token: user.zoomRefreshToken },
+      headers: { Authorization: `Basic ${auth}` },
+    });
 
-  const { access_token, refresh_token, expires_in } = response.data;
-  await UserModel.findByIdAndUpdate(userId, {
-    zoomAccessToken: access_token,
-    zoomRefreshToken: refresh_token,
-    zoomTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
-  });
-  return access_token;
+    const { access_token, refresh_token, expires_in } = response.data;
+    await UserModel.findByIdAndUpdate(userId, {
+      zoomAccessToken: access_token,
+      zoomRefreshToken: refresh_token,
+      zoomTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
+    });
+    return access_token;
+  } catch (error) {
+    // If refreshing the token fails, mark Zoom as disconnected
+    await UserModel.findByIdAndUpdate(userId, {
+      isZoomConnected: false,
+    });
+    throw new AppError(httpStatus.UNAUTHORIZED, "Zoom session expired or invalid. Please reconnect your Zoom account.");
+  }
 };
 
 
