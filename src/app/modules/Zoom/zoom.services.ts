@@ -68,6 +68,7 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
       topic: classTitle,
       type: 2,
       start_time: startTime,
+      timezone: 'Africa/Cairo',
       duration: 60,
       settings: {
         join_before_host: false, 
