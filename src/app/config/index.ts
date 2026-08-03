@@ -24,6 +24,11 @@ export default {
   zoom_client_secret: process.env.ZOOM_CLIENT_SECRET,
   zoom_redirect_url: process.env.ZOOM_REDIRECT_URL,
   zoom_webhook_secret: process.env.ZOOM_WEBHOOK_SECRET,
+  
+  aws_s3_bucket_name: process.env.AWS_S3_BUCKET_NAME,
+  aws_s3_region: process.env.AWS_S3_REGION,
+  aws_s3_access_key: process.env.AWS_S3_ACCESS_KEY,
+  aws_s3_secret_key: process.env.AWS_S3_SECRET_KEY,
 
   // Super Admin Seed
   super_admin_email: process.env.SUPER_ADMIN_EMAIL,
