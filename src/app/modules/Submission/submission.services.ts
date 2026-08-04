@@ -174,6 +174,54 @@ const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => 
   return result;
 };
 
+const markOfflineSubmissionInDB = async (payload: Partial<ISubmission>) => {
+  const task = await TaskModel.findById(payload.task);
+  if (!task) throw new AppError(httpStatus.NOT_FOUND, "Task not found");
+
+  const isAlreadySubmitted = await SubmissionModel.findOne({ 
+    task: payload.task, 
+    student: payload.student 
+  });
+
+  if (isAlreadySubmitted) {
+    throw new AppError(
+        httpStatus.BAD_REQUEST, 
+        "This student has already submitted this task."
+    );
+  }
+
+  // Auto-calculate percentage
+  const marks = payload.marks ?? 0;
+  const totalMarks = payload.totalMarks ?? 1;
+  const percentage = parseFloat(((marks / totalMarks) * 100).toFixed(2));
+
+  const submissionPayload = {
+    ...payload,
+    submissionStatus: 'offline',
+    isMarked: true,
+    percentage,
+  };
+
+  const result = await SubmissionModel.create(submissionPayload);
+  await result.populate('student');
+
+  if (result) {
+    await sendPushNotification(
+      payload.student!.toString(),
+      'Result Published! 🎉',
+      `Your marks for the task have been published. Check it now!`,
+      'result'
+    );
+    await notifyParentOfStudent(
+      payload.student!.toString(),
+      'Academic Progress Update 📈',
+      `[StudentName]'s latest homework/exam results are now available.`,
+      'result'
+    );
+  }
+  return result;
+};
+
 // Fetch all submissions for a specific task with QueryBuilder support
 
 
@@ -227,6 +275,7 @@ export const SubmissionServices = {
   submitTaskIntoDB,
   resubmitTaskIntoDB,
   markSubmissionInDB,
+  markOfflineSubmissionInDB,
   getSubmissionsByTaskFromDB,
   getMySubmissionsFromDB,
   getSingleSubmissionFromDB

@@ -40,6 +40,15 @@ router.patch(
   SubmissionControllers.markSubmission
 );
 
+router.post(
+  '/offline-mark',
+  auth('teacher', 'assistant'),
+  upload.single('correctAnswerPdf'),
+  parseBody,
+  validateRequest(SubmissionValidations.offlineMarkSubmissionSchema),
+  SubmissionControllers.markOfflineSubmission
+);
+
 
 router.get(
   '/task/:taskId',

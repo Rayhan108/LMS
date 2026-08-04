@@ -5,10 +5,10 @@ const submissionSchema = new Schema<ISubmission>({
   task: { type: Schema.Types.ObjectId, ref: 'Task', required: true },
   student: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
-  answerPdf: { type: String, required: true },
+  answerPdf: { type: String, required: false, default: "" },
   submissionStatus: { 
     type: String, 
-    enum: ['in time', 'late', 'don\'t submit'], 
+    enum: ['in time', 'late', 'don\'t submit', 'offline'], 
     default: 'in time' 
   },
   marks: { type: Number, default: 0 },

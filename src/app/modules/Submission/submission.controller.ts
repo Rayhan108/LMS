@@ -62,6 +62,25 @@ const markSubmission = catchAsync(async (req, res) => {
   });
 });
 
+const markOfflineSubmission = catchAsync(async (req, res) => {
+  let correctAnswerPdf;
+  if (req.file) {
+    correctAnswerPdf = await uploadImage(req);
+  }
+
+  const result = await SubmissionServices.markOfflineSubmissionInDB({
+    ...req.body,
+    correctAnswerPdf
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Offline submission marked successfully',
+    data: result
+  });
+});
+
 const getSubmissionsByTask = catchAsync(async (req, res) => {
   const { taskId } = req.params;
   
@@ -120,6 +139,7 @@ export const SubmissionControllers = {
   submitTask,
   resubmitTask,
   markSubmission,
+  markOfflineSubmission,
   getSubmissionsByTask,
   getMySubmissions,
   getSingleSubmission
