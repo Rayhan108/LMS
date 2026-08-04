@@ -30,6 +30,34 @@ const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
   return result;
 };
 
+const resubmitTaskIntoDB = async (id: string, studentId: string, payload: Partial<ISubmission>) => {
+  const submission = await SubmissionModel.findById(id);
+  if (!submission) throw new AppError(httpStatus.NOT_FOUND, "Submission not found");
+
+  if (submission.student.toString() !== studentId) {
+    throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update this submission");
+  }
+
+  if (submission.isMarked) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Cannot resubmit a marked submission");
+  }
+
+  const task = await TaskModel.findById(submission.task);
+  if (task) {
+    const now = new Date();
+    const endDateTime = new Date(`${task.endDate}T${task.endTime}`);
+    payload.submissionStatus = now > endDateTime ? 'late' : 'in time';
+  }
+
+  const result = await SubmissionModel.findByIdAndUpdate(
+    id,
+    { ...payload },
+    { new: true, runValidators: true }
+  );
+  return result;
+};
+
+
 // Fetch a single submission by its ID
 const getSingleSubmissionFromDB = async (submissionId: string) => {
   return await SubmissionModel.findById(submissionId).populate([
@@ -197,7 +225,9 @@ const getSubmissionsByTaskFromDB = async (taskId: string, query: Record<string, 
 
 export const SubmissionServices = {
   submitTaskIntoDB,
+  resubmitTaskIntoDB,
   markSubmissionInDB,
   getSubmissionsByTaskFromDB,
-  getMySubmissionsFromDB,getSingleSubmissionFromDB
+  getMySubmissionsFromDB,
+  getSingleSubmissionFromDB
 };

@@ -22,6 +22,26 @@ const submitTask = catchAsync(async (req, res) => {
   });
 });
 
+const resubmitTask = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  let answerPdf;
+  if (req.file) {
+    answerPdf = await uploadImage(req);
+  }
+
+  const result = await SubmissionServices.resubmitTaskIntoDB(id as string, req.user.userId, {
+    ...req.body,
+    ...(answerPdf && { answerPdf })
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Task resubmitted successfully',
+    data: result
+  });
+});
+
 const markSubmission = catchAsync(async (req, res) => {
   const { id } = req.params;
   let correctAnswerPdf;
@@ -98,6 +118,9 @@ const getMySubmissions = catchAsync(async (req, res) => {
 
 export const SubmissionControllers = {
   submitTask,
+  resubmitTask,
   markSubmission,
-  getSubmissionsByTask,getMySubmissions,getSingleSubmission
+  getSubmissionsByTask,
+  getMySubmissions,
+  getSingleSubmission
 };

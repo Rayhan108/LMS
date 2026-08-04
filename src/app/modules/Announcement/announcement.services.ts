@@ -153,9 +153,37 @@ const deleteAnnouncementFromDB = async (id: string) => {
   return await AnnouncementModel.findByIdAndDelete(id);
 };
 
+const reportCommentInDB = async (commentId: string, userId: string, reason: string) => {
+  const comment = await CommentModel.findById(commentId);
+  if (!comment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Comment not found!");
+  }
+
+  // Check if the user already reported this comment
+  const alreadyReported = comment.reportedBy?.find(
+    (report) => report.user.toString() === userId
+  );
+
+  if (alreadyReported) {
+    throw new AppError(httpStatus.BAD_REQUEST, "You have already reported this comment.");
+  }
+
+  // Add the report
+  comment.reportedBy = comment.reportedBy || [];
+  comment.reportedBy.push({
+    user: userId as any,
+    reason,
+    createdAt: new Date()
+  });
+
+  await comment.save();
+  return comment;
+};
+
 export const AnnouncementServices = {
   createAnnouncementIntoDB,
   getAnnouncementsByCourseFromDB,
   addCommentIntoDB,
-  deleteAnnouncementFromDB
+  deleteAnnouncementFromDB,
+  reportCommentInDB
 };

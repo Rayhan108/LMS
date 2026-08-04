@@ -27,8 +27,14 @@ const commentSchema = new Schema<IComment>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   comment: { type: String, required: true },
   parentCommentId: { type: Schema.Types.ObjectId, ref: 'Comment', default: null } , //id of student comment
-    classId: { type: Schema.Types.ObjectId, ref: 'Class', default: null }, 
-  taskId: { type: Schema.Types.ObjectId, ref: 'Task', default: null }
+  classId: { type: Schema.Types.ObjectId, ref: 'Class', default: null }, 
+  taskId: { type: Schema.Types.ObjectId, ref: 'Task', default: null },
+  reportedBy: [{
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    reason: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  isHidden: { type: Boolean, default: false }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },

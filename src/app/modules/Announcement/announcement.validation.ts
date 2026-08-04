@@ -15,7 +15,12 @@ const createCommentSchema = z.object({
   parentCommentId: z.string().optional(),
 });
 
+const reportCommentSchema = z.object({
+  reason: z.string({ message: "Reason for reporting is required" }),
+});
+
 export const AnnouncementValidations = {
   createAnnouncementSchema,
-  createCommentSchema
+  createCommentSchema,
+  reportCommentSchema
 };

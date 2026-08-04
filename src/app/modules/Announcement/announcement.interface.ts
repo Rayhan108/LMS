@@ -13,6 +13,8 @@ export interface IComment {
   user: Types.ObjectId;
   comment: string;
   parentCommentId?: Types.ObjectId; // If this exists, it's a reply
-   classId?: Types.ObjectId;       
-  taskId?: Types.ObjectId;   
+  classId?: Types.ObjectId;       
+  taskId?: Types.ObjectId;
+  reportedBy?: { user: Types.ObjectId, reason: string, createdAt: Date }[];
+  isHidden?: boolean;
 }

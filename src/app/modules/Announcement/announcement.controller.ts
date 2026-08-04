@@ -61,9 +61,25 @@ const deleteAnnouncement = catchAsync(async (req, res) => {
   });
 });
 
+const reportComment = catchAsync(async (req, res) => {
+  const { commentId } = req.params;
+  const { reason } = req.body;
+  const userId = req.user.userId;
+
+  const result = await AnnouncementServices.reportCommentInDB(commentId as string, userId, reason);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Comment reported successfully',
+    data: result
+  });
+});
+
 export const AnnouncementControllers = {
   createAnnouncement,
   getCourseAnnouncements,
   addComment,
-  deleteAnnouncement
+  deleteAnnouncement,
+  reportComment
 };

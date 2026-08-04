@@ -42,4 +42,11 @@ router.post(
   AnnouncementControllers.addComment
 );
 
+router.post(
+  '/comment/:commentId/report',
+  auth('teacher', 'assistant', 'student'),
+  validateRequest(AnnouncementValidations.reportCommentSchema),
+  AnnouncementControllers.reportComment
+);
+
 export const AnnouncementRoutes = router;

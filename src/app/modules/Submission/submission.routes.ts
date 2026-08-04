@@ -21,6 +21,15 @@ router.post(
   SubmissionControllers.submitTask
 );
 
+router.patch(
+  '/task/:id',
+  auth('student'),
+  upload.single('answerPdf'),
+  parseBody,
+  validateRequest(SubmissionValidations.updateSubmissionSchema),
+  SubmissionControllers.resubmitTask
+);
+
 
 router.patch(
   '/mark/:id',
