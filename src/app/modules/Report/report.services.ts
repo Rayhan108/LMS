@@ -849,9 +849,23 @@ const getCourseDashboardOverview = async (courseId: string) => {
 };
 
 
-const getStudentListWithStatus = async (courseId: string) => {
+const getStudentListWithStatus = async (courseId: string, searchTerm: string = '') => {
+    let matchQuery: any = {};
+    if (searchTerm) {
+        matchQuery = {
+            $or: [
+                { fullName: { $regex: searchTerm, $options: 'i' } },
+                { email: { $regex: searchTerm, $options: 'i' } }
+            ]
+        };
+    }
+
     const course = await CourseModel.findById(courseId)
-        .populate('students')
+        .populate({ 
+            path: 'students',
+            match: matchQuery,
+            select: 'fullName email image contact'
+        })
         .populate({ path: 'teacherId', select: 'fullName image contact email' })
         .populate({ path: 'assistantId', select: 'fullName image contact email' })
         .lean();
@@ -859,16 +873,20 @@ const getStudentListWithStatus = async (courseId: string) => {
     if (!course) throw new Error("Course not found");
 
     const validStudents = (course.students as any[]).filter(s => s !== null);
+
+    // FIX: Calculate and sync all progress for these students before fetching from DB
+    await Promise.all(validStudents.map(student => syncAndGetStudentProgress(courseId, student._id.toString())));
+
     const progressRecords = await StudentProgressModel.find({ course: courseId }).lean();
 
     const studentList = validStudents.map((student) => {
         const progress = progressRecords.find((p) => p.student.toString() === student._id.toString());
-        const isFresh = progress ? (progress.attendanceRate === 0 && progress.avgGrade === 0 && progress.overdueRate === 0) : true;
+        // Since we just synced, 'progress' will be up-to-date. If somehow missing, default to 0.
 
         return {
             _id: progress?._id || null,
-            student: { _id: student._id, fullName: student.fullName, image: student.image, contact: student.contact },
-            status: isFresh ? 'on track' : progress!.status,
+            student: { _id: student._id, fullName: student.fullName, email: student.email, image: student.image, contact: student.contact },
+            status: progress?.status || 'on track',
             attendanceRate: progress?.attendanceRate || 0,
             avgGrade: progress?.avgGrade || 0,
             homeworkCompletedRate: progress?.homeworkCompletedRate || 0,

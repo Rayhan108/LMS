@@ -32,7 +32,8 @@ const getCourseOverview = catchAsync(async (req, res) => {
 
 const getCourseStudentsStatus = catchAsync(async (req, res) => {
     const { courseId } = req.params;
-    const result = await ReportServices.getStudentListWithStatus(courseId as string);
+    const { search } = req.query;
+    const result = await ReportServices.getStudentListWithStatus(courseId as string, search as string);
     
     sendResponse(res, {
         statusCode: httpStatus.OK,
